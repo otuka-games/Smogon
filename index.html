@@ -2385,6 +2385,12 @@ opponent.sprite.src =
         setupTooltips();
     }
     
+const DYNAMAX_STRIPPED_MOVE_PROPS = ['secondary','self','priority','critPriority','isContact','isDynamicType','isBloodMoon','isSound','isTrapMove','isburb','apiTarget','apiAilment','apiEffectChance','apiStatChanges','apiMetaCategory','_maxEffectApplied'];
+function stripOriginalMoveEffects(move) {
+    const copy = { ...move };
+    DYNAMAX_STRIPPED_MOVE_PROPS.forEach(key => { delete copy[key]; });
+    return copy;
+}
 const DYNAMAX_MOVE_NAMES = {
     'ノーマル':'ダイアタック','ほのお':'ダイバーン','みず':'ダイストリーム','でんき':'ダイサンダー',
     'くさ':'ダイソウゲン','こおり':'ダイアイス','かくとう':'ダイナックル','どく':'ダイアシッド',
@@ -2405,12 +2411,12 @@ function getDynamaxMovePower(basePower) {
 function makeDynamaxMove(pokemon, move) {
     if (!dynamaxRuleEnabled || !(pokemon?.dynamaxActive || pokemon?.pendingDynamax) || !move) return move;
     if (move.category === 'status' || !move.power || move.power <= 0) {
-        return { ...move, name:'まもる', displayName:'ダイウォール', category:'status', type:'ノーマル', power:0, accuracy:101, priority:4, isMaxGuard:true, isDynamaxMove:true, originalMoveName:move.name };
+        return { ...stripOriginalMoveEffects(move), name:'まもる', displayName:'ダイウォール', category:'status', type:'ノーマル', power:0, accuracy:101, priority:4, isMaxGuard:true, isDynamaxMove:true, originalMoveName:move.name };
     }
     let moveType = move.dynamicAppliedType || (Array.isArray(move.type) ? move.type[0] : move.type) || 'ノーマル';
     if (pokemon.ability === 'スカイスキン' && moveType === 'ノーマル') moveType = 'ひこう';
     if (pokemon.ability === 'フェアリースキン' && moveType === 'ノーマル') moveType = 'フェアリー';
-    return { ...move, name:DYNAMAX_MOVE_NAMES[moveType] || 'ダイアタック', displayName:DYNAMAX_MOVE_NAMES[moveType] || 'ダイアタック', type:moveType, power:getDynamaxMovePower(move.power), accuracy:101, priority:0, isDynamaxMove:true, isMaxGuard:false, originalMoveName:move.name, isMultiHit:false, secondary:null };
+    return { ...stripOriginalMoveEffects(move), name:DYNAMAX_MOVE_NAMES[moveType] || 'ダイアタック', displayName:DYNAMAX_MOVE_NAMES[moveType] || 'ダイアタック', type:moveType, power:getDynamaxMovePower(move.power), accuracy:101, priority:0, isDynamaxMove:true, isMaxGuard:false, originalMoveName:move.name, isMultiHit:false, secondary:null };
 }
 function changeStageByMaxMove(pokemon, stat, amount) {
     if (!pokemon?.statStages) return false;
@@ -2429,7 +2435,7 @@ async function applyDynamaxMoveEffect(attacker, defender, move) {
     };
     const lower = async stat => {
         if (!defender || defender.currentHp <= 0) return;
-        if (['クリアボディ','しろいけむり','メタルプロテクト'].includes(defender.ability)) {
+        if (['クリアボディ','しろいけむり','メタルプロテクト'].includes(defender.ability) || (stat === 'attack' && defender.ability === 'かいりきバサミ') || (stat === 'defense' && defender.ability === 'はとむね')) {
             await showMessage(`${defender.name} の ${defender.ability} で 能力が下がらない！`);
             return;
         }
