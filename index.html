@@ -114,7 +114,47 @@
         background-size: cover;
         background-position: center;
     }
-    </style>
+    
+/* Current simulator visual style: blue-toned panels, crisp pixel sprites and responsive battle layout */
+:root { --sim-blue:#dbeafe; --sim-blue-strong:#2563eb; --sim-ink:#172033; --sim-panel:#f8fbff; }
+body { background:#eaf3ff !important; color:var(--sim-ink); font-family:system-ui,'Noto Sans JP',sans-serif !important; }
+#game-container { max-width:1120px !important; margin-inline:auto !important; }
+#selection-screen,#item-selection-screen,#opponent-selection-screen,#opponent-item-selection-screen,#difficulty-selection-screen {
+  background:linear-gradient(180deg,#f8fbff,#e7f1ff) !important; border:1px solid #b9d4f5 !important; border-radius:18px !important; box-shadow:0 5px 18px rgba(38,92,165,.12) !important;
+}
+#selection-title,#item-selection-title,#opponent-item-selection-title { color:#1d4ed8 !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:800 !important; letter-spacing:.02em; }
+.pokemon-card,.item-card,.difficulty-card { border:1px solid #cbd5e1 !important; border-radius:14px !important; background:linear-gradient(180deg,#fff,#eff6ff) !important; box-shadow:0 3px 0 rgba(30,64,175,.12) !important; padding:10px !important; color:#172033 !important; font-weight:700; transition:transform .15s,box-shadow .15s; }
+.pokemon-card:hover,.item-card:hover,.difficulty-card:hover { transform:translateY(-2px); border-color:#60a5fa !important; box-shadow:0 6px 12px rgba(37,99,235,.15) !important; }
+.pokemon-card img { width:100%; height:84px; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; }
+#battle-screen { border:1px solid #b9d4f5 !important; border-radius:20px !important; box-shadow:0 6px 20px rgba(38,92,165,.16) !important; background:linear-gradient(180deg,#e8f4ff 0%,#f8fbff 100%) !important; overflow:hidden; }
+#opponent-area,#player-area { max-width:330px !important; }
+#opponent-area .nes-container,#player-area > .nes-container { border:1px solid #bfd4ec !important; border-radius:13px !important; box-shadow:0 3px 0 rgba(30,64,175,.12) !important; background:rgba(255,255,255,.94) !important; color:#172033 !important; }
+#opponent-sprite,#player-sprite { max-width:100%; max-height:19dvh; width:auto; height:auto; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; filter:drop-shadow(0 4px 2px rgba(15,23,42,.12)); }
+.pokemon-sprite-stage { min-height:clamp(105px,22dvh,180px) !important; display:flex; align-items:flex-end; justify-content:center; }
+.hp-bar-container { height:14px !important; border:1px solid #334155 !important; border-radius:999px !important; overflow:hidden; background:#dbe4ef !important; }
+.hp-bar { border-radius:999px; transition:width .65s ease !important; }
+#menu { border:1px solid #bfd4ec !important; border-radius:14px !important; background:rgba(255,255,255,.97) !important; box-shadow:0 4px 0 rgba(30,64,175,.1) !important; }
+#message-log { border:1px solid #cbd5e1 !important; border-radius:10px !important; background:#eff6ff !important; color:#172033 !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:700; line-height:1.5; }
+#battle-menu button,#moves-container button,#setting-button,#surrender-button,#fight-button { border-radius:10px !important; border-width:1px !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:800; min-height:42px; }
+#screen-overlay { z-index:30 !important; }
+#weather-indicator,#field-indicator,#turn-counter,#rating-display { border-radius:9px !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:700; backdrop-filter:blur(5px); }
+@media(max-width:640px) {
+ #battle-screen { aspect-ratio:auto !important; min-height:clamp(500px,72dvh,690px) !important; }
+ #opponent-area { top:44px !important; right:5% !important; width:44% !important; }
+ #player-area { left:5% !important; width:44% !important; bottom:clamp(170px,29dvh,230px) !important; }
+ .pokemon-sprite-stage { min-height:clamp(90px,16dvh,135px) !important; }
+ #opponent-sprite,#player-sprite { max-height:16dvh !important; }
+ #menu { min-height:155px !important; max-height:235px !important; grid-template-columns:1fr !important; gap:6px !important; }
+ #message-log { min-height:58px; }
+ #battle-menu,#moves-container { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+ #battle-status-stack { max-width:45% !important; }
+}
+
+.pokemon-sprite-stage.is-floating img { animation:pokemon-hover 2.2s ease-in-out infinite; transform:translateY(-9px); transform-origin:50% 90%; }
+@keyframes pokemon-hover { 0%,100% { transform:translateY(-8px); } 50% { transform:translateY(-17px); } }
+.pokemon-sprite-stage.is-dynamaxed img { filter:drop-shadow(0 0 14px rgba(239,68,68,.75)); }
+.pokemon-sprite-stage.is-dynamaxed { transform:scale(1.08); transform-origin:50% 90%; }
+</style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div id="selection-tooltip" class="absolute hidden nes-container bg-white/95 p-2 text-xs z-50 w-auto pointer-events-none"></div>
@@ -124,6 +164,10 @@
         
         <div id="selection-screen" class="p-4">
             <h2 id="selection-title" class="text-center text-lg md:text-2xl mb-4 text-outline ">せんとうに だす ポケモンを えらんでくれ！</h2>
+<div class="flex flex-wrap justify-center gap-2 mb-3">
+<button id="tera-rule-toggle" class="px-4 py-2 rounded-lg font-bold border bg-blue-100 text-blue-800">テラスタル：ON</button>
+<button id="dynamax-rule-toggle" class="px-4 py-2 rounded-lg font-bold border bg-red-100 text-red-800">ダイマックス：ON</button>
+</div>
             <div id="pokemon-selection-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             </div>
         </div>
@@ -134,7 +178,13 @@
             </div>
         </div>
 
-        <div id="opponent-selection-screen" class="hidden p-4">
+        <div id="tera-type-picker" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl p-4 max-w-xl w-full shadow-xl">
+        <h3 class="text-center text-xl font-bold text-blue-700 mb-3">テラスタイプを選択</h3>
+        <div id="tera-type-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
+    </div>
+</div>
+<div id="opponent-selection-screen" class="hidden p-4">
             <h2 class="text-center text-lg md:text-2xl mb-4 text-outline">あいての ポケモンを えらんでくれ！</h2>
             <div id="opponent-pokemon-selection-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             </div>
@@ -208,7 +258,7 @@
 <div id="opponent-stat-display" class="text-xs mt-1 text-left"></div>
 
                 </div>
-                <div class="relative">
+                <div class="relative pokemon-sprite-stage">
                     <div id="opponent-tooltip" class="absolute top-full mt-2 hidden nes-container bg-white/95 p-2 text-xs z-10 w-48 text-center left-1/2 -translate-x-1/2"></div>
                     <img id="opponent-sprite" src="" alt="Opponent Pokemon">
                 </div>
@@ -216,7 +266,7 @@
 
 <div id="player-area" class="absolute bottom-32 sm:bottom-36 left-12 w-2/5 max-w-[300px] flex flex-col items-center">
 
-    <div class="relative" style="top:10px;">
+    <div class="relative pokemon-sprite-stage" style="top:10px;">
         <div id="player-tooltip" class="absolute bottom-full mb-2 hidden nes-container bg-white/95 p-2 text-xs z-10 w-48 text-center left-1/2 -translate-x-1/2"></div>
         <img id="player-sprite" src="" alt="Player Pokemon">
     </div>
@@ -299,6 +349,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectionScreen = document.getElementById('selection-screen');
     const pokemonSelectionGrid = document.getElementById('pokemon-selection-grid');
     const itemSelectionScreen = document.getElementById('item-selection-screen');
+    const teraTypePicker = document.getElementById('tera-type-picker');
+    const teraTypeGrid = document.getElementById('tera-type-grid');
+    const teraRuleToggle = document.getElementById('tera-rule-toggle');
+    const dynamaxRuleToggle = document.getElementById('dynamax-rule-toggle');
+    if (dynamaxRuleToggle) dynamaxRuleToggle.onclick = () => {
+        dynamaxRuleEnabled = !dynamaxRuleEnabled;
+        dynamaxRuleToggle.textContent = `ダイマックス：${dynamaxRuleEnabled ? 'ON' : 'OFF'}`;
+        dynamaxRuleToggle.classList.toggle('bg-red-100', dynamaxRuleEnabled);
+        dynamaxRuleToggle.classList.toggle('bg-gray-200', !dynamaxRuleEnabled);
+    };
+    if (teraRuleToggle) teraRuleToggle.onclick = () => {
+        teraRuleEnabled = !teraRuleEnabled;
+        teraRuleToggle.textContent = `テラスタル：${teraRuleEnabled ? 'ON' : 'OFF'}`;
+        teraRuleToggle.classList.toggle('bg-blue-100', teraRuleEnabled);
+        teraRuleToggle.classList.toggle('bg-gray-200', !teraRuleEnabled);
+    };
     const itemSelectionGrid = document.getElementById('item-selection-grid');
     const opponentSelectionScreen = document.getElementById('opponent-selection-screen');
     const opponentPokemonSelectionGrid = document.getElementById('opponent-pokemon-selection-grid');
@@ -391,6 +457,11 @@ surrenderButton.onclick = () => {
     // --- Game Data ---
     let playerPokemon;
     let opponentPokemon;
+    const TERASTAL_TYPES = ['ノーマル','ほのお','みず','でんき','くさ','こおり','かくとう','どく','じめん','ひこう','エスパー','むし','いわ','ゴースト','ドラゴン','あく','はがね','フェアリー'];
+    let teraRuleEnabled = true;
+    let selectedPlayerTeraType = null;
+    let selectedOpponentTeraType = null;
+    let dynamaxRuleEnabled = true;
     let selectedPlayerKey;
     let selectedPlayerItemName;
     let selectedOpponentKey;
@@ -415,12 +486,17 @@ surrenderButton.onclick = () => {
     
     const items = {
         'きあいのタスキ': { name: 'きあいのタスキ', description: 'HP1耐える。'},
-        'ちからのハチマキ': { name: 'ちからのハチマキ', description: '物理技の威力が1.5倍。'},
-        'ものしりメガネ': { name: 'ものしりメガネ', description: '特殊技の威力が1.5倍。'},
+        'こだわりハチマキ': { name: 'こだわりハチマキ', description: '物理技の威力が1.5倍。技が固定。'},
+        'こだわりメガネ': { name: 'こだわりメガネ', description: '特殊技の威力が1.5倍。技が固定。'},
+        'こだわりスカーフ': { name: 'こだわりスカーフ', description: '素早さが1.5倍。技が固定。'},
+        'ちからのハチマキ': { name: 'ちからのハチマキ', description: '物理技の威力が1.2倍。'},
+        'ものしりメガネ': { name: 'ものしりメガネ', description: '特殊技の威力が1.2倍。'},
         'しゅんそくスカーフ': { name: 'しゅんそくスカーフ', description: '持つと素早さが1.5倍。'},
-        'ゴツゴツメット': { name: 'ゴツゴツメット', description: '直接触れたら1/6のダメージ'},
+        'ゴツゴツメット': { name: 'ゴツゴツメット', description: '直接触れたら最大HPの1/8のダメージ'},
         'たいきゅうチョッキ': { name: 'たいきゅうチョッキ', description: '特防が1.5倍。'},
-        'オボンの実': { name: 'オボンの実', description: 'HPが半分でHPが1/2回復。'},
+        'しんかのきせき': { name: 'しんかのきせき', description: '進化できるポケモンの防御・特防が1.5倍。'},
+        'ブーストエナジー': { name: 'ブーストエナジー', description: 'こだいかっせいの能力を上げる。'},
+        'オボンの実': { name: 'オボンの実', description: 'HPが半分でHPが1/4回復。'},
         'きのみバスケット': { name: 'きのみバスケット', description: '毎ターンHPを回復かも'},
         'たべのこし': { name: 'たべのこし', description: '毎ターンHPを1/16回復。'},
         'せんせいのツメ': { name: 'せんせいのツメ', description: '30%で先制できる'},
@@ -900,13 +976,14 @@ function initZData(pokemon) {
 // ===== 使用可能判定 =====
 function canUseZMove(pokemon) {
     return (
+        !pokemon.dynamaxActive && !pokemon.pendingDynamax &&
         !pokemon.usedZMove &&
         pokemon.item?.name === "Zクリスタル"
     );
 }
 
 function canMegaEvolve(pokemon) {
-    if (pokemon.megaEvolved) return false;
+    if (pokemon.megaEvolved || pokemon.dynamaxActive || pokemon.pendingDynamax) return false;
 
     const mega = MEGA_DATA[pokemon.name];
     if (!mega) return false;
@@ -969,7 +1046,9 @@ function useZMove(pokemon){
         instance.statStages = { attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 };
         instance.status = null;
         instance.statusTurns = 0;
-        auroraVeil: 0;
+        instance.auroraVeil = 0;
+        instance.reflectTurns = 0;
+        instance.lightScreenTurns = 0;
         instance.volatileStatus = {
     seeded: false,
     seedSource: null
@@ -983,6 +1062,11 @@ function useZMove(pokemon){
         instance.isShiny = Math.random() < 0.00025;
         instance.isRampaging = false;
         instance.rampageTurns = 0;
+        instance.pendingDynamax = false;
+        instance.dynamaxUsed = false;
+        instance.dynamaxActive = false;
+        instance.dynamaxTurns = 0;
+        instance.originalMaxHp = instance.maxHp;
         instance.isConfused = false;
         instance.confusionTurns = 0;
         instance.toxicCounter = 0;
@@ -1199,7 +1283,26 @@ function getShownName(pokemon){
     
     function handlePlayerItemSelect(itemName) {
         selectedPlayerItemName = itemName;
-        showOpponentSelection();
+        if (teraRuleEnabled) showTeraTypePicker();
+        else {
+            selectedPlayerTeraType = pokemonBaseData[selectedPlayerKey]?.types?.[0] || 'ノーマル';
+            showOpponentSelection();
+        }
+    }
+    function showTeraTypePicker() {
+        teraTypeGrid.innerHTML = '';
+        TERASTAL_TYPES.forEach(type => {
+            const btn = document.createElement('button');
+            btn.textContent = type;
+            btn.className = 'rounded-lg border px-2 py-2 text-sm font-bold shadow-sm ' + (typeColors[type] || 'bg-gray-200 text-black');
+            btn.onclick = () => {
+                selectedPlayerTeraType = type;
+                teraTypePicker.classList.add('hidden');
+                showOpponentSelection();
+            };
+            teraTypeGrid.appendChild(btn);
+        });
+        teraTypePicker.classList.remove('hidden');
     }
     
     function showOpponentSelection() {
@@ -1311,6 +1414,10 @@ function getShownName(pokemon){
     
     function handleOpponentItemSelect(itemName) {
         selectedOpponentItemName = itemName;
+        const opponentTypes = pokemonBaseData[selectedOpponentKey]?.types || ['ノーマル'];
+        selectedOpponentTeraType = teraRuleEnabled
+            ? TERASTAL_TYPES[Math.floor(Math.random() * TERASTAL_TYPES.length)]
+            : opponentTypes[0];
         showDifficultySelection();
     }
     
@@ -1340,6 +1447,11 @@ function getShownName(pokemon){
 
         playerPokemon = createPokemonInstance(pokemonBaseData[selectedPlayerKey]);
         playerPokemon.item = { name: selectedPlayerItemName, used: false };
+        playerPokemon.teraType = selectedPlayerTeraType || playerPokemon.types[0] || 'ノーマル';
+        playerPokemon.teraActive = false;
+        playerPokemon.teraUsed = false;
+        playerPokemon.pendingTera = false;
+        playerPokemon.originalTypes = [...playerPokemon.types];
         playerPokemon.usedZMove = false;
 
         opponentPokemon = createPokemonInstance(pokemonBaseData[selectedOpponentKey]);
@@ -1349,6 +1461,11 @@ applyIllusion(opponentPokemon);
             ? determineOpponentItem(pokemonBaseData[selectedOpponentKey]) 
             : selectedOpponentItemName;
         opponentPokemon.item = { name: opponentItem, used: false };
+        opponentPokemon.teraType = selectedOpponentTeraType || opponentPokemon.types[0] || 'ノーマル';
+        opponentPokemon.teraActive = false;
+        opponentPokemon.teraUsed = false;
+        opponentPokemon.pendingTera = false;
+        opponentPokemon.originalTypes = [...opponentPokemon.types];
         initZData(playerPokemon);
 initZData(opponentPokemon);
 
@@ -1914,12 +2031,13 @@ function determineOpponentItem(pokemon) {
     if (pokemon.baseAttack > pokemon.baseSpAttack) {
         const items = [
             'きあいのタスキ',
+            'こだわりハチマキ',
             'ちからのハチマキ',
             'しゅんそくスカーフ',
+            'こだわりスカーフ',
             'せんせいのツメ',
             'たいきゅうチョッキ',
             'きあいのハチマキ',
-
         ];
 
         return items[
@@ -1931,8 +2049,10 @@ function determineOpponentItem(pokemon) {
     if (pokemon.baseSpAttack > pokemon.baseAttack) {
         const items = [
             'きあいのタスキ',
+            'こだわりメガネ',
             'ものしりメガネ',
             'しゅんそくスカーフ',
+            'こだわりスカーフ',
             'せんせいのツメ',
             'たいきゅうチョッキ',
             'きあいのハチマキ',
@@ -2173,9 +2293,8 @@ if (opponentPokemon.ability === "たましいのうろこ") {
 
     const sprite = isPlayer ? player.sprite : opponent.sprite;
 
-    sprite.src = isPlayer
-        ? mega.spriteBack
-        : mega.spriteFront;
+    sprite.src = getSpriteUrl(pokemon, isPlayer);
+    updatePokemonFloatVisual(pokemon, sprite);
 
     await showMessage(`${oldName} は メガシンカした！`);
     if (pokemon.ability === "ブレインフォース") {
@@ -2247,6 +2366,8 @@ opponent.sprite.src =
 
         const opponentSizeClasses = opponentPokemon.id === 'necrozma-ultra' || opponentPokemon.id === 'eternatus-eternamax' ? 'h-28 sm:h-36 md:h-44' : 'h-24 sm:h-32 md:h-40';
         opponent.sprite.className = `mx-auto ${opponentSizeClasses} object-contain transition-all duration-1000`;
+        updatePokemonFloatVisual(playerPokemon, player.sprite);
+        updatePokemonFloatVisual(opponentPokemon, opponent.sprite);
         
         screenOverlay.classList.remove('active');
         gameOverScreen.style.display = 'none';
@@ -2264,6 +2385,138 @@ opponent.sprite.src =
         setupTooltips();
     }
     
+const DYNAMAX_STRIPPED_MOVE_PROPS = ['secondary','self','priority','critPriority','isContact','isDynamicType','isBloodMoon','isSound','isTrapMove','isburb','apiTarget','apiAilment','apiEffectChance','apiStatChanges','apiMetaCategory','_maxEffectApplied'];
+function stripOriginalMoveEffects(move) {
+    const copy = { ...move };
+    DYNAMAX_STRIPPED_MOVE_PROPS.forEach(key => { delete copy[key]; });
+    return copy;
+}
+const DYNAMAX_MOVE_NAMES = {
+    'ノーマル':'ダイアタック','ほのお':'ダイバーン','みず':'ダイストリーム','でんき':'ダイサンダー',
+    'くさ':'ダイソウゲン','こおり':'ダイアイス','かくとう':'ダイナックル','どく':'ダイアシッド',
+    'じめん':'ダイアース','ひこう':'ダイジェット','エスパー':'ダイサイコ','むし':'ダイワーム',
+    'いわ':'ダイロック','ゴースト':'ダイホロウ','ドラゴン':'ダイドラグーン','あく':'ダイアーク',
+    'はがね':'ダイスチル','フェアリー':'ダイフェアリー'
+};
+function getDynamaxMovePower(basePower) {
+    const power = Number(basePower) || 0;
+    if (power <= 40) return 90;
+    if (power <= 50) return 100;
+    if (power <= 60) return 110;
+    if (power <= 70) return 120;
+    if (power <= 100) return 130;
+    if (power <= 140) return 140;
+    return 150;
+}
+function makeDynamaxMove(pokemon, move) {
+    if (!dynamaxRuleEnabled || !(pokemon?.dynamaxActive || pokemon?.pendingDynamax) || !move) return move;
+    if (move.category === 'status' || !move.power || move.power <= 0) {
+        return { ...stripOriginalMoveEffects(move), name:'まもる', displayName:'ダイウォール', category:'status', type:'ノーマル', power:0, accuracy:101, priority:4, isMaxGuard:true, isDynamaxMove:true, originalMoveName:move.name };
+    }
+    let moveType = move.dynamicAppliedType || (Array.isArray(move.type) ? move.type[0] : move.type) || 'ノーマル';
+    if (pokemon.ability === 'スカイスキン' && moveType === 'ノーマル') moveType = 'ひこう';
+    if (pokemon.ability === 'フェアリースキン' && moveType === 'ノーマル') moveType = 'フェアリー';
+    return { ...stripOriginalMoveEffects(move), name:DYNAMAX_MOVE_NAMES[moveType] || 'ダイアタック', displayName:DYNAMAX_MOVE_NAMES[moveType] || 'ダイアタック', type:moveType, power:getDynamaxMovePower(move.power), accuracy:101, priority:0, isDynamaxMove:true, isMaxGuard:false, originalMoveName:move.name, isMultiHit:false, secondary:null };
+}
+function changeStageByMaxMove(pokemon, stat, amount) {
+    if (!pokemon?.statStages) return false;
+    const before = Number(pokemon.statStages[stat] || 0);
+    const after = Math.max(-6, Math.min(6, before + amount));
+    pokemon.statStages[stat] = after;
+    return after !== before;
+}
+async function applyDynamaxMoveEffect(attacker, defender, move) {
+    if (!move?.isDynamaxMove || move._maxEffectApplied) return;
+    move._maxEffectApplied = true;
+    const names = {attack:'こうげき',defense:'ぼうぎょ',spAttack:'とくこう',spDefense:'とくぼう',speed:'すばやさ'};
+    const raise = async stat => {
+        const changed = changeStageByMaxMove(attacker,stat,1);
+        await showMessage(changed ? `${attacker.name} の ${names[stat]}が あがった！` : 'しかし これ以上 能力は上がらない！');
+    };
+    const lower = async stat => {
+        if (!defender || defender.currentHp <= 0) return;
+        if (['クリアボディ','しろいけむり','メタルプロテクト'].includes(defender.ability) || (stat === 'attack' && defender.ability === 'かいりきバサミ') || (stat === 'defense' && defender.ability === 'はとむね')) {
+            await showMessage(`${defender.name} の ${defender.ability} で 能力が下がらない！`);
+            return;
+        }
+        const changed = changeStageByMaxMove(defender,stat,-1);
+        await showMessage(changed ? `${defender.name} の ${names[stat]}が さがった！` : `${defender.name} の ${names[stat]}は これ以上さがらない！`);
+    };
+    switch(move.type) {
+        case 'ノーマル': await lower('speed'); break;
+        case 'ほのお': weather={type:'sun',turns:5}; await showMessage('ひざしが つよくなった！'); break;
+        case 'みず': weather={type:'rain',turns:5}; await showMessage('あめが ふりはじめた！'); break;
+        case 'でんき': field={type:'electric',turns:5}; await showMessage('エレキフィールドが はられた！'); break;
+        case 'くさ': field={type:'grass',turns:5}; await showMessage('グラスフィールドが はられた！'); break;
+        case 'こおり': weather={type:'snow',turns:5}; await showMessage('ゆきが ふりはじめた！'); break;
+        case 'かくとう': await raise('attack'); break;
+        case 'どく': await raise('spAttack'); break;
+        case 'じめん': await raise('spDefense'); break;
+        case 'ひこう': await raise('speed'); break;
+        case 'エスパー': field={type:'psyco',turns:5}; await showMessage('サイコフィールドが はられた！'); break;
+        case 'むし': await lower('spAttack'); break;
+        case 'いわ': weather={type:'sandstorm',turns:5}; await showMessage('すなあらしが ふきはじめた！'); break;
+        case 'ゴースト': await lower('defense'); break;
+        case 'ドラゴン': await lower('attack'); break;
+        case 'あく': await lower('spDefense'); break;
+        case 'はがね': await raise('defense'); break;
+        case 'フェアリー': field={type:'misty',turns:5}; await showMessage('ミストフィールドが はられた！'); break;
+    }
+    updateWeatherIndicator();
+    updateFieldIndicator();
+    updateStatDisplay(playerPokemon,document.getElementById('player-stat-display'));
+    updateStatDisplay(opponentPokemon,document.getElementById('opponent-stat-display'));
+}
+async function activateDynamax(pokemon,isPlayer) {
+    if (!dynamaxRuleEnabled || !pokemon || pokemon.megaEvolved || pokemon.dynamaxUsed || pokemon.dynamaxActive) return false;
+    pokemon.dynamaxUsed=true;
+    pokemon.pendingDynamax=false;
+    pokemon.dynamaxActive=true;
+    pokemon.choiceLockedMove = null;
+    const sprite = isPlayer ? player.sprite : opponent.sprite;
+    sprite.closest('.pokemon-sprite-stage')?.classList.add('is-dynamaxed');
+    pokemon.dynamaxTurns=3;
+    pokemon.originalMaxHp=pokemon.maxHp;
+    pokemon.maxHp*=2;
+    pokemon.currentHp=Math.min(pokemon.maxHp,pokemon.currentHp*2);
+    document.getElementById(isPlayer?'player-max-hp':'opponent-max-hp').textContent=pokemon.maxHp;
+    updateHpBars();
+    await showMessage(`${pokemon.name} は ダイマックスした！`);
+    return true;
+}
+async function endDynamax(pokemon,isPlayer) {
+    if (!pokemon?.dynamaxActive) return;
+    pokemon.dynamaxActive=false;
+    pokemon.dynamaxTurns=0;
+    const sprite = isPlayer ? player.sprite : opponent.sprite;
+    sprite.closest('.pokemon-sprite-stage')?.classList.remove('is-dynamaxed');
+    pokemon.maxHp=pokemon.originalMaxHp || Math.floor(pokemon.maxHp/2);
+    pokemon.currentHp=pokemon.currentHp<=0?0:Math.min(pokemon.maxHp,Math.ceil(pokemon.currentHp/2));
+    document.getElementById(isPlayer?'player-max-hp':'opponent-max-hp').textContent=pokemon.maxHp;
+    updateHpBars();
+    await showMessage(`${pokemon.name} の ダイマックスが とけた！`);
+}
+const visuallyFloatingPokemon = new Set(['magnemite','magneton','magnezone','koffing','weezing','gastly','haunter','gengar','misdreavus','unown','lunatone','solrock','baltoy','claydol','duskull','chimecho','latias','latios','castform','drifloon','drifblim','uxie','mesprit','azelf','cresselia','rotom','yamask','cofagrigus','elgyem','beheeyem','litwick','lampent','chandelure','hydreigon','flabebe','floette','florges','sylveon','carbink','klefki','phantump','trevenant','pumpkaboo','gourgeist','xerneas','yveltal','hoopa','volcanion','magearna','necrozma','lunala','solgaleo','poipole','naganadel','blacephalon','zeraora','eternatus','calyrex','enamorus','flittle','espathra','tinkatink','tinkatuff','tinkaton','ceruledge','armarouge','mimikyu-busted']);
+function updatePokemonFloatVisual(pokemon,sprite) {
+    if (!pokemon || !sprite) return;
+    const stage = sprite.closest('.pokemon-sprite-stage');
+    if (!stage) return;
+    const id = String(pokemon.id || '').toLowerCase();
+    stage.classList.toggle('is-floating', pokemon.ability === 'ふゆう' || visuallyFloatingPokemon.has(id));
+}
+function canInflictSecondaryStatus(target, status) {
+    if (!target || (target.status != null && target.status !== 'none') || !status) return false;
+    const types = Array.isArray(target.types) ? target.types : [];
+    const ability = target.ability;
+    if (status === 'burn' && (types.includes('ほのお') || ability === 'みずのベール')) return false;
+    if (status === 'freeze' && (types.includes('こおり') || ability === 'マグマのよろい')) return false;
+    if (status === 'paralyze' && (types.includes('でんき') || ability === 'じゅうなん')) return false;
+    if ((status === 'poison' || status === 'toxic') && (types.includes('どく') || types.includes('はがね') || ability === 'めんえき')) return false;
+    if (status === 'sleep' && (ability === 'ふみん' || ability === 'やるき')) return false;
+    if (status === 'sleep' && field?.type === 'electric' && isPokemonGrounded(target)) return false;
+    if (field?.type === 'misty' && isPokemonGrounded(target)) return false;
+    return true;
+}
 function updateMoves() {
     movesContainer.innerHTML = "";
     moveTooltip.style.display = "none";
@@ -2278,9 +2531,10 @@ if (!playerPokemon.pendingMega) {
     // 通常技
     playerPokemon.moves.forEach(move => {
         const button = document.createElement('button');
-        button.textContent = move.name;
+        const displayedMove = playerPokemon.dynamaxActive || playerPokemon.pendingDynamax ? makeDynamaxMove(playerPokemon, move) : move;
+        button.textContent = displayedMove.displayName || displayedMove.name;
 
-        const isDisabled = move.currentPp === 0;
+        const isDisabled = move.currentPp === 0 || isChoiceMoveLocked(playerPokemon, move);
 
 let displayType = Array.isArray(move.type)
     ? move.type[0]
@@ -2309,6 +2563,7 @@ button.className =
     ${isDisabled ? 'opacity-50' : ''}`;
 
         button.disabled = isDisabled;
+        if (isChoiceMoveLocked(playerPokemon, move)) button.title = 'こだわりアイテムで技が固定されています';
         button.onclick = () => startBattleRound(move);
 
         button.onmouseover = (e) => {
@@ -2331,6 +2586,49 @@ button.onmouseout = () => {
         movesContainer.appendChild(button);
     });
 
+    // ダイマックス：1試合1回、3ターン。技を選ぶ前に発動を予約。
+    if (dynamaxRuleEnabled && !playerPokemon.dynamaxUsed && !playerPokemon.dynamaxActive && !playerPokemon.pendingMega) {
+        const dmaxBtn = document.createElement('button');
+        dmaxBtn.textContent = playerPokemon.pendingDynamax ? 'ダイマックスを取りやめる' : 'ダイマックス';
+        dmaxBtn.className = 'border-2 border-red-500 bg-red-100 text-slate-900 rounded p-1 font-bold';
+        dmaxBtn.onclick = () => {
+            playerPokemon.pendingDynamax = !playerPokemon.pendingDynamax;
+            if (playerPokemon.pendingDynamax) playerPokemon.pendingMega = false;
+            updateMoves();
+            if (playerPokemon.pendingDynamax) {
+                battleMenu.style.display = 'none';
+                movesContainer.style.display = 'grid';
+                messageText.textContent = `${playerPokemon.name} は ダイマックスする準備をした！ 技を選んでください。`;
+            } else {
+                battleMenu.style.display = 'grid';
+                movesContainer.style.display = 'none';
+                messageText.textContent = 'ダイマックスを とりやめた！';
+            }
+        };
+        movesContainer.appendChild(dmaxBtn);
+    }
+
+    // テラスタル：1試合1回。選択した技と同時に発動する.
+    if (teraRuleEnabled && !playerPokemon.teraUsed && !playerPokemon.teraActive) {
+        const teraBtn = document.createElement('button');
+        teraBtn.textContent = playerPokemon.pendingTera ? 'テラスタルを取りやめる' : 'テラスタル';
+        teraBtn.className = 'border-2 border-cyan-500 bg-cyan-100 text-slate-900 rounded p-1 font-bold';
+        teraBtn.onclick = () => {
+            playerPokemon.pendingTera = !playerPokemon.pendingTera;
+            updateMoves();
+            if (playerPokemon.pendingTera) {
+                battleMenu.style.display = 'none';
+                movesContainer.style.display = 'grid';
+                messageText.textContent = `${playerPokemon.name} は ${playerPokemon.teraType}タイプに テラスタルする準備をした！ 技を選んでください。`;
+            } else {
+                battleMenu.style.display = 'grid';
+                movesContainer.style.display = 'none';
+                messageText.textContent = 'テラスタルを とりやめた！';
+            }
+        };
+        movesContainer.appendChild(teraBtn);
+    }
+
     // メガ進化
     if (canMegaEvolve(playerPokemon)) {
         const megaBtn = document.createElement('button');
@@ -2341,6 +2639,7 @@ button.onmouseout = () => {
 
         megaBtn.onclick = () => {
             playerPokemon.pendingMega = true;
+            playerPokemon.pendingDynamax = false;
             showMessage("どの技で メガシンカする？");
         };
 
@@ -2411,17 +2710,37 @@ btn.onmouseout = () => {
 }
 
     
-    function getSpriteUrl(pokemon, back = false) {
-        if (typeof pokemon.id === 'string') {
-             const baseUrl = "https://play.pokemonshowdown.com/sprites/";
-             const folder = back ? "ani-back" : "ani";
-             const shiny = pokemon.isShiny ? "-shiny" : "";
-             return `${baseUrl}${folder}${shiny}/${pokemon.id}.gif`;
-        } else {
-             const shinyFolder = pokemon.isShiny ? 'shiny/' : '';
-             const backFolder = back ? 'back/' : '';
-             return `${POKE_API_BASE_URL}${backFolder}${shinyFolder}${pokemon.id}.gif`;
+    function getPixelSpriteUrl(id, back = false, shiny = false) {
+        const value = String(id || '').trim().toLowerCase();
+        if (!value) return '';
+        // numeric PokeAPI IDs use the 5th-gen Black/White pixel sprites.
+        if (/^\\d+$/.test(value)) {
+            const root = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/';
+            const folder = back ? (shiny ? 'back/shiny/' : 'back/') : (shiny ? 'shiny/' : '');
+            return root + folder + value + '.png';
         }
+        const folder = back ? (shiny ? 'gen5-back-shiny' : 'gen5-back') : (shiny ? 'gen5-shiny' : 'gen5');
+        return `https://play.pokemonshowdown.com/sprites/${folder}/${encodeURIComponent(value)}.png`;
+    }
+
+    function getSpriteUrl(pokemon, back = false) {
+        if (!pokemon) return '';
+        let specialUrl = null;
+        if (pokemon.megaEvolved && (pokemon.megaSpriteFront || pokemon.megaSpriteBack)) {
+            specialUrl = back ? pokemon.megaSpriteBack : pokemon.megaSpriteFront;
+        } else if (pokemon.disguiseBroken && (pokemon.bustedSpriteFront || pokemon.bustedSpriteBack)) {
+            specialUrl = back ? pokemon.bustedSpriteBack : pokemon.bustedSpriteFront;
+        }
+        if (specialUrl) {
+            // Preserve the dedicated Mega/form image but render it in the same pixel-sprite style.
+            const match = String(specialUrl).match(/\\/([^/?#]+)\\.(?:gif|png|webp)(?:[?#].*)?$/i);
+            if (match) {
+                let slug = match[1].replace(/-shiny$/, '').toLowerCase();
+                slug = slug.replace(/-mega-x$/, '-megax').replace(/-mega-y$/, '-megay');
+                return getPixelSpriteUrl(slug, back, !!pokemon.isShiny);
+            }
+        }
+        return getPixelSpriteUrl(pokemon.id, back, !!pokemon.isShiny);
     }
 
     function getMoveTooltipContent(move) {
@@ -2661,6 +2980,8 @@ opponentPokemon.hasMoved = false;
         disableMoves();
         playerPokemon.isFlinched = false;
         opponentPokemon.isFlinched = false;
+        playerPokemon.isMaxGuard = false;
+        opponentPokemon.isMaxGuard = false;
         
         if (playerPokemon.isRampaging) {
             playerPokemon.rampageTurns--;
@@ -2669,9 +2990,11 @@ opponentPokemon.hasMoved = false;
              playerMove.currentPp--;
         }
 
-        const opponentMove = getOpponentMove();
+        let opponentMove = getOpponentMove();
         playerPokemon.selectedMove = playerMove;
-opponentPokemon.selectedMove = opponentMove;
+        opponentPokemon.selectedMove = opponentMove;
+        if (hasChoiceItem(playerPokemon) && !playerPokemon.choiceLockedMove) playerPokemon.choiceLockedMove = playerMove?.name;
+        if (hasChoiceItem(opponentPokemon) && !opponentPokemon.choiceLockedMove) opponentPokemon.choiceLockedMove = opponentMove?.name;
         if (
     canMegaEvolve(opponentPokemon) &&
     !opponentPokemon.megaEvolved
@@ -2682,12 +3005,20 @@ if (playerPokemon.pendingMega) {
     await megaEvolve(playerPokemon, true);
     playerPokemon.pendingMega = false;
 }
-
 if (opponentPokemon.pendingMega) {
     await megaEvolve(opponentPokemon, false);
     opponentPokemon.pendingMega = false;
 }
-        if(opponentMove.name !== 'わるあがき') opponentMove.currentPp--;
+if (teraRuleEnabled && !opponentPokemon.teraUsed && !opponentPokemon.teraActive && Math.random() < 0.20) opponentPokemon.pendingTera = true;
+if (playerPokemon.pendingTera) await teraEvolve(playerPokemon, true);
+if (opponentPokemon.pendingTera) await teraEvolve(opponentPokemon, false);
+if (playerPokemon.pendingDynamax) await activateDynamax(playerPokemon, true);
+if (dynamaxRuleEnabled && !opponentPokemon.pendingMega && !opponentPokemon.megaEvolved && !opponentPokemon.dynamaxUsed && !opponentPokemon.dynamaxActive && !opponentPokemon.pendingDynamax && Math.random() < (difficulty === 'hard' ? 0.25 : 0.12)) opponentPokemon.pendingDynamax = true;
+if (opponentPokemon.pendingDynamax) await activateDynamax(opponentPokemon, false);
+const opponentOriginalMove = opponentMove;
+        if(opponentOriginalMove.name !== 'わるあがき') opponentOriginalMove.currentPp--;
+playerMove = makeDynamaxMove(playerPokemon, playerMove);
+opponentMove = makeDynamaxMove(opponentPokemon, opponentMove);
         let playerClaw = false;
 let opponentClaw = false;
 
@@ -2796,6 +3127,14 @@ if (playerClaw && !opponentClaw) {
 
         gameOver = await handleEndOfTurnEffects();
         if (gameOver) { isBattleInProgress = false; return; }
+        if (playerPokemon.dynamaxActive && playerPokemon.currentHp > 0) {
+            playerPokemon.dynamaxTurns--;
+            if (playerPokemon.dynamaxTurns <= 0) await endDynamax(playerPokemon, true);
+        }
+        if (opponentPokemon.dynamaxActive && opponentPokemon.currentHp > 0) {
+            opponentPokemon.dynamaxTurns--;
+            if (opponentPokemon.dynamaxTurns <= 0) await endDynamax(opponentPokemon, false);
+        }
         
         currentTurn++;
         turnCounter.textContent = `ターン: ${currentTurn}`;
@@ -4455,6 +4794,10 @@ function chooseBestAIMoveSecondVersion(
 // ============================================================
 
 function getOpponentMove() {
+    if (hasChoiceItem(opponentPokemon) && opponentPokemon.choiceLockedMove) {
+        const locked = opponentPokemon.moves.find(m => m.name === opponentPokemon.choiceLockedMove && (m.currentPp ?? 0) > 0);
+        if (locked) return locked;
+    }
 
     // ========================================================
     // げきりん等で行動固定中
@@ -4601,6 +4944,10 @@ function getOpponentMove() {
 
     async function handleAttack(attacker, defender, move, isFirstAttacker) {
         const isPlayerAttacking = attacker === playerPokemon;
+        if (field.type === 'psyco' && move.category !== 'status' && (move.priority || 0) > 0 && isPokemonGrounded(defender)) {
+            await showMessage('サイコフィールドに まもられて 先制技が きかなかった！');
+            return false;
+        }
         const defenderUI = isPlayerAttacking ? opponent : player;
         const hpBeforeDamage = defender.currentHp;
 if (move.isDynamicType) {
@@ -5765,8 +6112,8 @@ if (
     
     async function applyDamage(attacker, defender, damage, move, defenderUI) {
 
-    // まもる
-    if (defender.isProtected) {
+    // まもる：ダイマックスわざは通常のまもるで1/4、ダイウォールは完全防御。
+    if (defender.isProtected && (defender.isMaxGuard || !move?.isDynamaxMove)) {
 
     // ふかしのこぶしなら貫通
     if (attacker.ability !== "ふかしのこぶし") {
@@ -5801,11 +6148,16 @@ if (
         return { hit: false };
     }
 }
+    if (defender.isProtected && move?.isDynamaxMove && !defender.isMaxGuard) {
+        damage = Math.max(1, Math.floor(damage / 4));
+        await showMessage('まもるで ダイマックスわざの ダメージを へらした！');
+    }
 
     // みがわり
     if (defender.hasSubstitute && !move.isSound) {
         defender.substituteHp -= damage;
         await showMessage(`${defender.name} の みがわりが こうげきを うけた！`);
+        if (move?.isDynamaxMove && damage > 0) await applyDynamaxMoveEffect(attacker, defender, move);
 
         if (defender.substituteHp <= 0) {
             defender.hasSubstitute = false;
@@ -5818,11 +6170,30 @@ if (
     }
 
     // 本体ダメージ
+    const hpBeforeDamage = defender.currentHp;
     defender.currentHp = Math.max(0, defender.currentHp - damage);
     defender.lastDamageTaken = damage;
     defender.lastDamageCategory = move.category;
+    // きあいのタスキは満タンからの致死ダメージなら、通常技・連続技を問わず1HPで耐える。
+    if (defender.currentHp <= 0 && damage > 0 && defender.item?.name === 'きあいのタスキ' && !defender.item.used && hpBeforeDamage === defender.maxHp) {
+        defender.item.used = true;
+        defender.currentHp = 1;
+        await showMessage(`${defender.name} は きあいのタスキで もちこたえた！`);
+    }
+
+    // はたきおとす：本体にダメージが通った場合のみ、落とせる持ち物を除去する。
+    if (
+        move.name === "はたきおとす" &&
+        defender.item?.name &&
+        !["メガストーン", "Zクリスタル"].includes(defender.item.name)
+    ) {
+        const knockedItem = defender.item.name;
+        defender.item = null;
+        await showMessage(`${knockedItem} を はたきおとした！`);
+    }
 
     updateHpBars();
+    if (move?.isDynamaxMove && damage > 0) await applyDynamaxMoveEffect(attacker, defender, move);
 
     // ⭐ ここでまず defender の瀕死チェック
     if (defender.currentHp <= 0) {
@@ -5834,7 +6205,7 @@ if (
     // ⭐ 接触ダメージ
     if (move.isContact) {
         if (defender.item?.name === 'ゴツゴツメット') {
-            const recoil = Math.floor(attacker.maxHp / 6);
+            const recoil = Math.floor(attacker.maxHp / 8);
             attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
             await showMessage(`${attacker.name} は ゴツゴツメットで ダメージをうけた！`);
         }
@@ -6276,8 +6647,30 @@ if (
         if (move.accuracy < 101 && Math.random() * 100 >= move.accuracy) {
             await showMessage(`しかし うまくきまらなかった！`); return;
         }
+        const sleepMoves = ['さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび'];
+        const statusMoves = ['おにび', 'でんじは', 'どくどく', 'へびにらみ', 'さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび'];
+        if (isPokemonGrounded(defender) && ((field.type === 'electric' && sleepMoves.includes(move.name)) || (field.type === 'misty' && statusMoves.includes(move.name))) && !['ねむる'].includes(move.name)) {
+            await showMessage('フィールドの こうかで 状態変化を うけない！');
+            return;
+        }
         let message = '';
         switch(move.name) {
+            case 'サイコフィールド':
+                field = { type: 'psyco', turns: 5 };
+                message = 'あしもとが ふしぎなかんじに なった！';
+                break;
+            case 'グラスフィールド':
+                field = { type: 'grass', turns: 5 };
+                message = 'あしもとに くさが おいしげった！';
+                break;
+            case 'エレキフィールド':
+                field = { type: 'electric', turns: 5 };
+                message = 'あしもとに 電気が かけめぐる！';
+                break;
+            case 'ミストフィールド':
+                field = { type: 'misty', turns: 5 };
+                message = 'あしもとに きりが たちこめた！';
+                break;
             case '天の祈り':
             case 'はねやすめ':
             case 'じこさいせい':
@@ -6313,6 +6706,7 @@ if (
 
         if (Math.random() < 1/3) {
             attacker.isProtected = true;
+            attacker.isMaxGuard = !!move.isMaxGuard;
             message = `${attacker.name} は まもりの たいせいに はいった！`;
         } else {
             attacker.isProtected = false;
@@ -6322,6 +6716,7 @@ if (
     } else {
 
         attacker.isProtected = true;
+        attacker.isMaxGuard = !!move.isMaxGuard;
         message = `${attacker.name} は まもりの たいせいに はいった！`;
     }
 
@@ -6346,12 +6741,34 @@ if (
             case 'からをやぶる': attacker.statStages.attack = Math.min(6, attacker.statStages.attack + 2); attacker.statStages.spAttack = Math.min(6, attacker.statStages.spAttack + 2); attacker.statStages.speed = Math.min(6, attacker.statStages.speed + 2); attacker.statStages.defense = Math.max(-6, attacker.statStages.defense - 1); attacker.statStages.spDefense = Math.max(-6, attacker.statStages.spDefense - 1);  message = `${attacker.name} の こうげきと とくこうと すばやさが ぐーんとあがって ぼうぎょと とくぼうが さがった！`; break;
             case 'のろい': attacker.statStages.attack = Math.min(6, attacker.statStages.attack + 1); attacker.statStages.defense = Math.min(6, attacker.statStages.defense + 1); attacker.statStages.speed = Math.max(-6, attacker.statStages.speed - 1); message = `${attacker.name} の すばやさが さがり こうげきと ぼうぎょが あがった！`; break;
             case 'おにび': if (!defender.types.includes("ほのお") && defender.status === null) { defender.status = 'burn'; message = `あいて の ${defender.name} は やけどを おった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'さいみんじゅつ': if(defender.status === null) { defender.status = 'sleep'; defender.statusTurns = Math.floor(Math.random() * 3) + 2; message = `あいて の ${defender.name} は ねむってしまった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'Zさいみんじゅつ': if (defender.status === null) { defender.status = 'sleep'; message = `あいて の ${defender.name} は ねむった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'どくどく': if (!defender.types.includes("どく") && !defender.types.includes("はがね") && defender.status === null) { defender.status = 'toxic'; message = `あいて の ${defender.name} は もうどくを あびた！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'でんじは': if (!defender.types.includes("でんき") && !defender.types.includes("じめん") && defender.status === null) { defender.status = 'paralyze'; message = `あいて の ${defender.name} は まひに なった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'ねむりごな' :
-            case 'きのこのほうし': if(!defender.types.includes("くさ") && defender.status === null) { defender.status = 'sleep'; defender.statusTurns = Math.floor(Math.random() * 3) + 2; message = `あいて の ${defender.name} は ねむってしまった！`; } else { message = `しかし うまくきまらなかった！`; } break;
+            case 'さいみんじゅつ':
+            case 'Zさいみんじゅつ':
+                if (!defender.hasSubstitute && canInflictSecondaryStatus(defender,'sleep')) {
+                    defender.status = 'sleep';
+                    defender.statusTurns = Math.floor(Math.random() * 3) + 2;
+                    message = `あいて の ${defender.name} は ねむってしまった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'どくどく':
+                if (!defender.hasSubstitute && canInflictSecondaryStatus(defender,'toxic')) {
+                    defender.status = 'toxic';
+                    message = `あいて の ${defender.name} は もうどくを あびた！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'でんじは':
+                if (!defender.hasSubstitute && !defender.types.includes('じめん') && canInflictSecondaryStatus(defender,'paralyze')) {
+                    defender.status = 'paralyze';
+                    message = `あいて の ${defender.name} は まひに なった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'ねむりごな':
+            case 'きのこのほうし':
+                if (!defender.hasSubstitute && !defender.types.includes('くさ') && canInflictSecondaryStatus(defender,'sleep')) {
+                    defender.status = 'sleep';
+                    defender.statusTurns = Math.floor(Math.random() * 3) + 2;
+                    message = `あいて の ${defender.name} は ねむってしまった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
             case 'オーロラベール':
 
     if (weather.type !== 'snow') {
@@ -6406,7 +6823,46 @@ if (
                 }
                 updateHpBars();
                 break;
-            case 'あくび': message = `あいて の ${defender.name} は ねむけに おそわれた！`; break;
+            case 'へびにらみ':
+                if (!defender.hasSubstitute && defender.types && !defender.types.includes('でんき') && canInflictSecondaryStatus(defender, 'paralyze')) {
+                    defender.status = 'paralyze';
+                    message = `あいて の ${defender.name} は まひに なった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'あくび': {
+                if ((field.type === 'misty' || field.type === 'electric') && isPokemonGrounded(defender)) message = 'しかし フィールドに まもられている！';
+                else if (defender.status && defender.status !== 'none') message = 'しかし うまくきまらなかった！';
+                else if (['ふみん','やるき'].includes(defender.ability)) message = `しかし ${defender.name} には きかなかった！`;
+                else {
+                    defender.yawnTurns = 2;
+                    message = `あいて の ${defender.name} は ねむけに おそわれた！`;
+                }
+                break;
+            }
+            case 'あやしいひかり':
+            case 'いばる': {
+                if (move.name === 'いばる') defender.statStages.attack = Math.min(6, (defender.statStages.attack || 0) + 2);
+                if (field.type === 'misty' && isPokemonGrounded(defender)) {
+                    message = 'しかし ミストフィールドに まもられている！';
+                } else if (defender.isConfused) {
+                    message = `しかし ${defender.name} は すでに こんらんしている！`;
+                } else {
+                    defender.isConfused = true;
+                    defender.confusionTurns = 3;
+                    message = `${defender.name} は こんらんした！`;
+                }
+                break;
+            }
+            case 'ひかりのかべ':
+            case 'リフレクター': {
+                const screenKey = move.name === 'ひかりのかべ' ? 'lightScreenTurns' : 'reflectTurns';
+                if (attacker[screenKey] > 0) message = 'しかし うまくきまらなかった！';
+                else {
+                    attacker[screenKey] = 5;
+                    message = `${attacker.name} の まわりを ${move.name} が つつんだ！`;
+                }
+                break;
+            }
             case 'てっぺき': attacker.statStages.defense = Math.min(6, attacker.statStages.defense + 2); message = `${attacker.name} の ぼうぎょが ぐーんと あがった！`; break;
             case 'コットンガード': attacker.statStages.defense = Math.min(6, attacker.statStages.defense + 3); message = `${attacker.name} の ぼうぎょが ぐぐーんと あがった！`; break;
         }
@@ -6434,6 +6890,7 @@ if (
 }
 
         updateStatusMarkers();
+        updateFieldIndicator();
         updateStatDisplay(playerPokemon, document.getElementById('player-stat-display'));
 updateStatDisplay(opponentPokemon, document.getElementById('opponent-stat-display'));
         if (message) {
@@ -6441,7 +6898,22 @@ updateStatDisplay(opponentPokemon, document.getElementById('opponent-stat-displa
 }
     }
 
-   async function handleEndOfTurnEffects() {
+   async function handleYawnEffect(pokemon) {
+    if (!pokemon || !pokemon.yawnTurns || pokemon.currentHp <= 0) return false;
+    pokemon.yawnTurns--;
+    if (pokemon.yawnTurns <= 0 && (!pokemon.status || pokemon.status === 'none')) {
+        if (['ふみん','やるき'].includes(pokemon.ability) || ((field.type === 'electric' || field.type === 'misty') && isPokemonGrounded(pokemon))) {
+            await showMessage(`${pokemon.name} は ねむらなかった！`);
+        } else {
+            pokemon.status = 'sleep';
+            pokemon.statusTurns = Math.floor(Math.random() * 3) + 2;
+            await showMessage(`${pokemon.name} は ねむってしまった！`);
+            updateStatusMarkers();
+        }
+    }
+    return false;
+}
+async function handleEndOfTurnEffects() {
         async function applySpeedBoost(pokemon) {
         if (pokemon.ability === "かそく") {
         // すでに最大ランクならスキップ（+6まで）
@@ -6465,10 +6937,20 @@ if (opponentPokemon.ability === 'ムラッけ') {
 }
         if (playerPokemon.isProtected) playerPokemon.isProtected = false;
         if (opponentPokemon.isProtected) opponentPokemon.isProtected = false;
-        if(field.type === 'psyco') {
-             field.turns--;
-    if (field.turns === 0) {
+        if (['psyco', 'grass', 'electric', 'misty'].includes(field.type)) {
+    if (field.type === 'grass') {
+        for (const pokemon of [playerPokemon, opponentPokemon]) {
+            if (pokemon.currentHp > 0 && isPokemonGrounded(pokemon)) {
+                const heal = Math.max(1, Math.floor(pokemon.maxHp / 16));
+                pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+            }
+        }
+        updateHpBars();
+    }
+    field.turns--;
+    if (field.turns <= 0) {
         field.type = 'none';
+        field.turns = 0;
         await showMessage('あしもとは もとに もどった！');
         updateFieldIndicator();
     }
@@ -6521,24 +7003,14 @@ for (const pokemon of [playerPokemon, opponentPokemon]) {
 }
 if(weather.type === 'snow') {
             await showMessage('ゆきが ふっている！');
-            if(!playerPokemon.types.includes('こおり') && playerPokemon.currentHp > 0) {
-                 playerPokemon.currentHp -= Math.floor(playerPokemon.maxHp / 16);
-                 await showMessage(`${playerPokemon.name}は さむさで ダメージを うけた！`);
-                 updateHpBars();
-                 if (await checkFainted(playerPokemon, true)) return true;
-            }
-             if(!opponentPokemon.types.includes('こおり') && opponentPokemon.currentHp > 0) {
-                 opponentPokemon.currentHp -= Math.floor(opponentPokemon.maxHp / 16);
-                 await showMessage(`あいての ${opponentPokemon.name}は さむさで ダメージを うけた！`);
-                 updateHpBars();
-                 if (await checkFainted(opponentPokemon, false)) return true;
-            }
+            // ゆきはHPダメージを与えず、こおりタイプの物理防御を強化する。
             weather.turns--;
-    if (weather.turns === 0) {
-        weather.type = 'none';
-        await showMessage('ゆきは やんだ！');
-        updateWeatherIndicator();
-    }
+            if (weather.turns <= 0) {
+                weather.type = 'none';
+                weather.turns = 0;
+                await showMessage('ゆきは やんだ！');
+                updateWeatherIndicator();
+            }
 }
         async function applyLeechSeed(target, isPlayer) {
     if (!target.seeded || target.currentHp <= 0) return false;
@@ -6688,6 +7160,8 @@ if (opponentPokemon.mummyTurns > 0 && opponentPokemon.currentHp > 0) {
         await showMessage(`ミイラのしばりの こうかが きれた！`);
     }
 }
+        if (await handleYawnEffect(playerPokemon)) return true;
+        if (await handleYawnEffect(opponentPokemon)) return true;
         if (await handleStatusDamage(playerPokemon, true)) return true;
         if (await handleStatusDamage(opponentPokemon, false)) return true;
         if (await applyBerryBasketEffect(playerPokemon, true)) return true;
@@ -6755,6 +7229,11 @@ async function applyBerryBasketEffect(pokemon, isPlayer) {
     await new Promise(resolve => setTimeout(resolve, 600));
     return pokemon.currentHp <= 0;
 }
+        for (const pokemon of [playerPokemon, opponentPokemon]) {
+            for (const screenKey of ['reflectTurns', 'lightScreenTurns', 'auroraVeil']) {
+                if (pokemon[screenKey] > 0) pokemon[screenKey]--;
+            }
+        }
         return false;
     }
 
@@ -6828,15 +7307,59 @@ async function applyBerryBasketEffect(pokemon, isPlayer) {
         return 2 / (2 - stage);
     }
 
-    function getPokemonSpeed(pokemon) {
+    function isPokemonGrounded(pokemon) {
+    if (!pokemon) return false;
+    const types = Array.isArray(pokemon.types) ? pokemon.types : [pokemon.types].filter(Boolean);
+    if (pokemon.grounded === false || pokemon.isGrounded === false) return false;
+    return !types.includes('ひこう') && pokemon.ability !== 'ふゆう';
+}
+
+function hasChoiceItem(pokemon) {
+    if (pokemon && (pokemon.dynamaxActive || pokemon.pendingDynamax)) return false;
+    return !!pokemon && ['こだわりハチマキ', 'こだわりメガネ', 'こだわりスカーフ'].includes(pokemon.item?.name);
+}
+function isChoiceMoveLocked(pokemon, move) {
+    return hasChoiceItem(pokemon) && !!pokemon.choiceLockedMove && pokemon.choiceLockedMove !== move?.name;
+}
+function canUseEviolite(pokemon) {
+    return !!pokemon && pokemon.name === 'ポリゴン2';
+}
+function isAncientBoostActive(pokemon) {
+    if (!pokemon || pokemon.ability !== 'こだいかっせい') return false;
+    if (weather?.type === 'sun') return true;
+    if (pokemon.ancientBoostActivated) return true;
+    if (pokemon.item?.name === 'ブーストエナジー' && !pokemon.boostEnergyConsumed) {
+        pokemon.boostEnergyConsumed = true;
+        pokemon.ancientBoostActivated = true;
+        pokemon.pendingAncientBoostMessage = true;
+        return true;
+    }
+    return false;
+}
+function getAncientBoostStat(pokemon) {
+    if (!pokemon) return null;
+    const stats = { attack:pokemon.attack, defense:pokemon.defense, spAttack:pokemon.spAttack, spDefense:pokemon.spDefense, speed:pokemon.speed };
+    return Object.keys(stats).reduce((best, stat) => stats[stat] > stats[best] ? stat : best, 'attack');
+}
+async function teraEvolve(pokemon, isPlayer) {
+    if (!teraRuleEnabled || !pokemon || pokemon.teraUsed || pokemon.teraActive) return false;
+    if (!TERASTAL_TYPES.includes(pokemon.teraType)) pokemon.teraType = (pokemon.types || ['ノーマル'])[0];
+    pokemon.originalTypes = Array.isArray(pokemon.types) ? [...pokemon.types] : [pokemon.types];
+    pokemon.teraActive = true;
+    pokemon.teraUsed = true;
+    pokemon.pendingTera = false;
+    pokemon.types = [pokemon.teraType];
+    updateHpBars();
+    await showMessage(`${pokemon.name} は テラスタルした！ ${pokemon.teraType}タイプに へんかした！`);
+    return true;
+}
+
+function getPokemonSpeed(pokemon) {
         let speed = pokemon.speed * getStatModifier(pokemon.statStages.speed);
+        if (isAncientBoostActive(pokemon) && getAncientBoostStat(pokemon) === 'speed') speed *= 1.5;
         if (pokemon.status === 'paralyze') speed *= 0.5;
-        if (pokemon.item && pokemon.item.name === 'しゅんそくスカーフ') {
-            speed *= 1.5;
-        }
-        if (pokemon.ability && pokemon.ability.name === 'ききかいひ') {
-            speed *= 1.25;
-        }
+        if (pokemon.item && ['しゅんそくスカーフ','こだわりスカーフ'].includes(pokemon.item.name)) speed *= 1.5;
+        if ((pokemon.ability?.name || pokemon.ability) === 'ききかいひ') speed *= 1.25;
         return speed;
     }
 
@@ -6869,7 +7392,7 @@ async function applyGeigekiScopeOnEnter(pokemon) {
     async function checkAndUseItem(pokemon) {
         if (pokemon.item && pokemon.item.name === "オボンの実" && !pokemon.item.used && pokemon.currentHp > 0 && pokemon.currentHp <= pokemon.maxHp / 2) {
             pokemon.item.used = true;
-            const healAmount = Math.floor(pokemon.maxHp / 2);
+            const healAmount = Math.floor(pokemon.maxHp / 4);
             pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + healAmount);
             await showMessage(`${pokemon.name} は オボンの実で かいふくした！`);
             updateHpBars();
@@ -6896,10 +7419,10 @@ async function applyGeigekiScopeOnEnter(pokemon) {
 // スカイスキン
 if (
     attacker.ability === "スカイスキン" &&
-    move.type === "ノーマル" &&
+    attackTypes.includes("ノーマル") &&
     move.category !== "status"
 ) {
-    attackType = "ひこう";
+    attackTypes = attackTypes.map(type => type === "ノーマル" ? "ひこう" : type);
 }
         let effectivenessMessage = '';
         const level = 50;
@@ -6927,18 +7450,12 @@ const defStageFix = (stage) =>
     defender.disguiseBroken = true;
 
     if (defender.name === "ミミッキュ") {
-        let sprite;
-
-        if (defender === playerPokemon) {
-            sprite = player.sprite;
-            sprite.src =
-                "https://play.pokemonshowdown.com/sprites/ani-back/mimikyu-busted.gif";
-        } else {
-            sprite = opponent.sprite;
-            sprite.src =
-                "https://play.pokemonshowdown.com/sprites/ani/mimikyu-busted.gif";
-        }
-
+        defender.disguiseBroken = true;
+        defender.bustedSpriteFront = "https://play.pokemonshowdown.com/sprites/ani/mimikyu-busted.gif";
+        defender.bustedSpriteBack = "https://play.pokemonshowdown.com/sprites/ani-back/mimikyu-busted.gif";
+        const sprite = defender === playerPokemon ? player.sprite : opponent.sprite;
+        sprite.src = getSpriteUrl(defender, defender === playerPokemon);
+        updatePokemonFloatVisual(defender, sprite);
     }
 
     return {
@@ -6980,6 +7497,14 @@ if (move.name === "せいなるつるぎ" && defenseStage > 0) {
 defenseStat =
     defender.defense *
     getStatModifier(defStageFix(defenseStage));
+if (defender.item?.name === 'しんかのきせき' && canUseEviolite(defender)) defenseStat *= 1.5;
+if (isAncientBoostActive(defender) && getAncientBoostStat(defender) === 'defense') defenseStat *= 1.3;
+if (isAncientBoostActive(attacker) && getAncientBoostStat(attacker) === 'attack') attackStat *= 1.3;
+
+// ゆき：こおりタイプの物理防御1.5倍
+if (weather.type === "snow" && defender.types.includes("こおり")) {
+    defenseStat *= 1.5;
+}
 
 // わざわいのつるぎ
 if (attacker.ability === "わざわいのつるぎ") {
@@ -7001,6 +7526,9 @@ if (defender.ability === "わざわいのうつわ") {
     defenseStat =
         defender.spDefense *
         getStatModifier(defStageFix(defender.statStages.spDefense));
+    if (defender.item?.name === 'しんかのきせき' && canUseEviolite(defender)) defenseStat *= 1.5;
+    if (isAncientBoostActive(defender) && getAncientBoostStat(defender) === 'spDefense') defenseStat *= 1.3;
+    if (isAncientBoostActive(attacker) && getAncientBoostStat(attacker) === 'spAttack') attackStat *= 1.3;
 
         // ゆき補正
     if (
@@ -7020,6 +7548,10 @@ if (defender.ability === "わざわいのうつわ") {
 }
 
         let movePower = move.power;
+        // はたきおとす：落とせる持ち物を持つ相手には威力1.5倍。
+        if (move.name === "はたきおとす" && defender.item?.name && !["メガストーン", "Zクリスタル"].includes(defender.item.name)) {
+            movePower *= 1.5;
+        }
         if ( move.name === "からげんき" && ( attacker.status === "burn" ||attacker.status === "poison" ||attacker.status === "toxic" ||attacker.status === "paralysis" )) { movePower *= 2; }
         if ( move.name === "ふっとう" && ( attacker.status === "burn" )) { movePower *= 2; }
         if (move.name === "てんびんのさいだん") {
@@ -7048,8 +7580,10 @@ if (defender.ability === "わざわいのうつわ") {
         if (attacker.ability === 'てつのこぶし' && move.isPunch) movePower *= 1.2;
         if (attacker.ability === 'りゅうのあご' &&((Array.isArray(move.type) && move.type.includes('ドラゴン')) ||move.type === 'ドラゴン')) {movePower *= 1.5;}
         if (attacker.ability === 'りゅうのあご' &&((Array.isArray(move.type) && move.type.includes('ほのお')) ||move.type === 'ほのお')) {movePower *= 1.5;}
-        if (attacker.item && attacker.item.name === 'ちからのハチマキ' && move.category === 'physical') movePower *= 1.5;
-        if (attacker.item && attacker.item.name === 'ものしりメガネ' && move.category === 'special') movePower *= 1.5;
+        if (attacker.item && attacker.item.name === 'ちからのハチマキ' && move.category === 'physical') movePower *= 1.2;
+        if (attacker.item && attacker.item.name === 'ものしりメガネ' && move.category === 'special') movePower *= 1.2;
+        if (!attacker.dynamaxActive && attacker.item?.name === 'こだわりハチマキ' && move.category === 'physical') movePower *= 1.5;
+        if (!attacker.dynamaxActive && attacker.item?.name === 'こだわりメガネ' && move.category === 'special') movePower *= 1.5;
         if (attacker.item && attacker.item.name === 'なにも持たせない' && move.power <= 2000) movePower *= 1;
         if (attacker.ability === 'ちからずく' && move.category && move.power <= 2000) movePower *= 1.3;
         if (attacker.ability === 'そうだいしょう' && move.category && move.power <= 2000) movePower *= 1.3;
@@ -7084,42 +7618,62 @@ if (
 }
 
 if (weather.type === 'rain') {
-    if (move.type === 'みず') movePower *= 1.5;
-    if (move.type === 'ほのお') movePower *= 0.5;
+    if (attackTypes.includes('みず')) movePower *= 1.5;
+    if (attackTypes.includes('ほのお')) movePower *= 0.5;
 };
-if (field.type === 'psyco') {
-
-    // エスパー技強化
-    if (move.type === 'エスパー') {
-        movePower *= 1.6;
-    }
-
-    // 先制技弱体化
-    if (move.priority > 0) {
-        movePower *= 0.0001;
-    }
+if (weather.type === 'sun') {
+    if (attackTypes.includes('ほのお')) movePower *= 1.5;
+    if (attackTypes.includes('みず')) movePower *= 0.5;
+}
+if (field.type === 'psyco' && isPokemonGrounded(attacker) && attackTypes.includes('エスパー')) {
+    movePower *= 1.3;
+}
+if (field.type === 'grass' && isPokemonGrounded(attacker) && attackTypes.includes('くさ')) {
+    movePower *= 1.3;
+}
+if (field.type === 'electric' && isPokemonGrounded(attacker) && attackTypes.includes('でんき')) {
+    movePower *= 1.3;
+}
+if (field.type === 'misty' && isPokemonGrounded(defender) && attackTypes.includes('ドラゴン')) {
+    movePower *= 0.5;
+}
+if (field.type === 'grass' && isPokemonGrounded(defender) && ['じしん', 'じならし', 'マグニチュード'].includes(move.name)) {
+    movePower *= 0.5;
 }
 
         let damage = Math.floor(Math.floor(Math.floor(2 * level / 5 + 2) * movePower * attackStat / defenseStat) / 50) + 2;
 
-        if (attackTypes.some(type => attacker.types.includes(type))) {
-    const stabMultiplier = attacker.ability === 'てきおうりょく' ? 2 : 1.5;
+        const originalTypes = attacker.teraActive && Array.isArray(attacker.originalTypes) ? attacker.originalTypes : attacker.types;
+const hasOriginalStab = attackTypes.some(type => originalTypes.includes(type));
+const hasTeraStab = attacker.teraActive && attackTypes.includes(attacker.teraType);
+if (hasOriginalStab || hasTeraStab) {
+    let stabMultiplier = 1.5;
+    if (attacker.ability === 'てきおうりょく') {
+        if (hasTeraStab && originalTypes.includes(attacker.teraType)) stabMultiplier = 2.25;
+        else if (hasTeraStab || hasOriginalStab) stabMultiplier = 2;
+    } else if (hasTeraStab && originalTypes.includes(attacker.teraType)) stabMultiplier = 2;
+    else if (hasTeraStab) stabMultiplier = 1.5;
     damage = Math.floor(damage * stabMultiplier);
 }
 
         if (defender.ability === 'マルチスケイル' && defender.currentHp === defender.maxHp && !defender.hasSubstitute) damage *= 0.5;
         if (defender.ability === 'あついしぼう' && (move.type === 'ほのお' || move.type === 'こおり')) damage *= 0.5;
         
-       const typeMultipliers = attackTypes.map(type =>
-    calculateTypeEffectiveness(type, defender.types)
-);
-
-const typeMultiplier = Math.max(...typeMultipliers);
+       const defenderTypesForDamage = defender.teraActive ? [defender.teraType] : defender.types;
+const typeMultiplier = attackTypes.reduce((moveMultiplier, attackingType) => {
+    const againstDefender = defenderTypesForDamage.reduce((defMultiplier, defendingType) => {
+        const multiplier = move.name === 'フリーズドライ' && attackingType === 'こおり' && defendingType === 'みず'
+            ? 2
+            : (typeChart[attackingType]?.[defendingType] ?? 1);
+        return defMultiplier * multiplier;
+    }, 1);
+    return moveMultiplier * againstDefender;
+}, 1);
        let actualTypeMultiplier = typeMultiplier;
 
 if (
     attacker.ability === "きもったま" &&
-    defender.types.includes("ゴースト") &&
+    defenderTypesForDamage.includes("ゴースト") &&
     (
         attackType === "ノーマル" ||
         attackType === "かくとう"
@@ -7145,6 +7699,9 @@ if (
 
         if (defender.auroraVeil > 0) {
     damage = Math.floor(damage * 0.5);
+} else {
+    if (move.category === 'physical' && defender.reflectTurns > 0) damage = Math.floor(damage * 0.5);
+    if (move.category === 'special' && defender.lightScreenTurns > 0) damage = Math.floor(damage * 0.5);
 }
         
 let healing = 0;
@@ -7346,6 +7903,43 @@ isBattleInProgress = false;
     showMessage('どうする？', 500);
 }
     async function handleAbilityEffectsOnEntry() {
+    // Current simulator's entry-trigger abilities, adapted to the preserved 1v1 field.
+    const abilityStatLabels = { attack:'こうげき', defense:'ぼうぎょ', spAttack:'とくこう', spDefense:'とくぼう', speed:'すばやさ' };
+    for (const pokemon of [playerPokemon, opponentPokemon]) {
+        if (pokemon.ability === 'こだいかっせい' && pokemon.item?.name === 'ブーストエナジー' && !pokemon.boostEnergyConsumed) {
+            pokemon.boostEnergyConsumed = true;
+            pokemon.ancientBoostActivated = true;
+            const boostedStat = getAncientBoostStat(pokemon);
+            await showMessage(`${pokemon.name} の こだいかっせい！`);
+            await showMessage(`${abilityStatLabels[boostedStat] || '能力'}が上がった！`);
+        }
+    }
+    if (playerPokemon.ability === 'いかく' && !['クリアボディ','しろいけむり','メタルプロテクト','きもったま','せいしんりょく'].includes(opponentPokemon.ability)) {
+        opponentPokemon.statStages.attack = Math.max(-6, opponentPokemon.statStages.attack - 1);
+        await showMessage(`${playerPokemon.name} の いかく！ あいての こうげきが さがった！`);
+        updateStatDisplay(opponentPokemon, document.getElementById('opponent-stat-display'));
+    }
+    if (opponentPokemon.ability === 'いかく' && !['クリアボディ','しろいけむり','メタルプロテクト','きもったま','せいしんりょく'].includes(playerPokemon.ability)) {
+        playerPokemon.statStages.attack = Math.max(-6, playerPokemon.statStages.attack - 1);
+        await showMessage(`あいての ${opponentPokemon.name} の いかく！ こうげきが さがった！`);
+        updateStatDisplay(playerPokemon, document.getElementById('player-stat-display'));
+    }
+    for (const [pokemon, foe, isPlayer] of [[playerPokemon,opponentPokemon,true],[opponentPokemon,playerPokemon,false]]) {
+        const label = isPlayer ? 'じぶんの' : 'あいての';
+        const display = document.getElementById(isPlayer ? 'player-stat-display' : 'opponent-stat-display');
+        if (pokemon.ability === 'ダウンロード') {
+            const boostStat = foe.defense < foe.spDefense ? 'attack' : 'spAttack';
+            pokemon.statStages[boostStat] = Math.min(6, pokemon.statStages[boostStat] + 1);
+            await showMessage(`${label} ${pokemon.name} の ダウンロード！ ${abilityStatLabels[boostStat]}が あがった！`);
+            updateStatDisplay(pokemon, display);
+        }
+        if (['かたいつぼ','たましいのうろこ'].includes(pokemon.ability)) {
+            pokemon.statStages.defense = Math.min(6, pokemon.statStages.defense + 1);
+            pokemon.statStages.spDefense = Math.min(6, pokemon.statStages.spDefense + 1);
+            await showMessage(`${label} ${pokemon.name} の ${pokemon.ability}！ ぼうぎょと とくぼうが あがった！`);
+            updateStatDisplay(pokemon, display);
+        }
+    }
     if(playerPokemon.ability === "すなおこし" || opponentPokemon.ability === "すなおこし") {
         weather.type = 'sandstorm';
         weather.turns = 5;
@@ -7369,6 +7963,21 @@ isBattleInProgress = false;
         field.turns = 5;
         await showMessage('あしもとが ふしぎなかんじに なった！');
     }
+    if(playerPokemon.ability === "グラスメイカー" || opponentPokemon.ability === "グラスメイカー") {
+        field.type = 'grass';
+        field.turns = 5;
+        await showMessage('あしもとに くさが おいしげった！');
+    }
+    if(playerPokemon.ability === "エレキメイカー" || opponentPokemon.ability === "エレキメイカー") {
+        field.type = 'electric';
+        field.turns = 5;
+        await showMessage('あしもとに 電気が かけめぐる！');
+    }
+    if(playerPokemon.ability === "ミストメイカー" || opponentPokemon.ability === "ミストメイカー") {
+        field.type = 'misty';
+        field.turns = 5;
+        await showMessage('あしもとに きりが たちこめた！');
+    }
 
     updateWeatherIndicator();
     updateFieldIndicator();
@@ -7390,10 +7999,16 @@ isBattleInProgress = false;
     }
 }
 function updateFieldIndicator() {
-  if (field.type === 'psyco') {
-        fieldIndicator.textContent = '状態: サイコフィールド';
+    const labels = {
+        psyco: 'サイコフィールド',
+        grass: 'グラスフィールド',
+        electric: 'エレキフィールド',
+        misty: 'ミストフィールド'
+    };
+    if (labels[field.type]) {
+        fieldIndicator.textContent = '状態: ' + labels[field.type];
         fieldIndicator.style.display = 'block';
-  } else {    
+    } else {
         fieldIndicator.style.display = 'none';
     }
 }
