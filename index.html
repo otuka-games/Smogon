@@ -1480,6 +1480,15 @@ class="border-2 border-gray-800 rounded p-1 btn-neutral">
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // 起動ボタンを最優先で登録。後続の初期化エラーに巻き込まれないようにする。
+    const startupButton = document.getElementById('start-battle-button');
+    if (startupButton) startupButton.addEventListener('click', () => {
+        try {
+            startBattleFromOpening();
+        } catch (error) {
+            alert('ゲーム起動エラー: ' + (error?.message || error));
+        }
+    });
     // localStorage が無効・容量超過・プライベートモード等でもゲーム本体を停止させない。
     const safeStorage = {
         getItem(key) {
@@ -2033,8 +2042,7 @@ document.getElementById("reset-no-button");
         updateOpeningStats();
     }
 
-    // 起動ボタン・履歴ボタンを初期化
-    startBattleButton.onclick = startBattleFromOpening;
+    // 起動ボタンは冒頭で登録済み。
     historyButton.onclick = showHistoryScreen;
     historyBackButton.onclick = showOpeningScreen;
 
