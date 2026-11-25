@@ -1009,7 +1009,9 @@ function useZMove(pokemon){
         instance.statStages = { attack: 0, defense: 0, spAttack: 0, spDefense: 0, speed: 0 };
         instance.status = null;
         instance.statusTurns = 0;
-        auroraVeil: 0;
+        instance.auroraVeil = 0;
+        instance.reflectTurns = 0;
+        instance.lightScreenTurns = 0;
         instance.volatileStatus = {
     seeded: false,
     seedSource: null
@@ -6514,6 +6516,30 @@ if (
                 updateHpBars();
                 break;
             case 'あくび': message = `あいて の ${defender.name} は ねむけに おそわれた！`; break;
+            case 'あやしいひかり':
+            case 'いばる': {
+                if (move.name === 'いばる') defender.statStages.attack = Math.min(6, (defender.statStages.attack || 0) + 2);
+                if (field.type === 'misty' && isPokemonGrounded(defender)) {
+                    message = 'しかし ミストフィールドに まもられている！';
+                } else if (defender.isConfused) {
+                    message = `しかし ${defender.name} は すでに こんらんしている！`;
+                } else {
+                    defender.isConfused = true;
+                    defender.confusionTurns = 3;
+                    message = `${defender.name} は こんらんした！`;
+                }
+                break;
+            }
+            case 'ひかりのかべ':
+            case 'リフレクター': {
+                const screenKey = move.name === 'ひかりのかべ' ? 'lightScreenTurns' : 'reflectTurns';
+                if (attacker[screenKey] > 0) message = 'しかし うまくきまらなかった！';
+                else {
+                    attacker[screenKey] = 5;
+                    message = `${attacker.name} の まわりを ${move.name} が つつんだ！`;
+                }
+                break;
+            }
             case 'てっぺき': attacker.statStages.defense = Math.min(6, attacker.statStages.defense + 2); message = `${attacker.name} の ぼうぎょが ぐーんと あがった！`; break;
             case 'コットンガード': attacker.statStages.defense = Math.min(6, attacker.statStages.defense + 3); message = `${attacker.name} の ぼうぎょが ぐぐーんと あがった！`; break;
         }
@@ -6863,6 +6889,11 @@ async function applyBerryBasketEffect(pokemon, isPlayer) {
     await new Promise(resolve => setTimeout(resolve, 600));
     return pokemon.currentHp <= 0;
 }
+        for (const pokemon of [playerPokemon, opponentPokemon]) {
+            for (const screenKey of ['reflectTurns', 'lightScreenTurns', 'auroraVeil']) {
+                if (pokemon[screenKey] > 0) pokemon[screenKey]--;
+            }
+        }
         return false;
     }
 
@@ -7307,6 +7338,9 @@ if (
 
         if (defender.auroraVeil > 0) {
     damage = Math.floor(damage * 0.5);
+} else {
+    if (move.category === 'physical' && defender.reflectTurns > 0) damage = Math.floor(damage * 0.5);
+    if (move.category === 'special' && defender.lightScreenTurns > 0) damage = Math.floor(damage * 0.5);
 }
         
 let healing = 0;
