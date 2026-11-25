@@ -7359,18 +7359,11 @@ const defStageFix = (stage) =>
     defender.disguiseBroken = true;
 
     if (defender.name === "ミミッキュ") {
-        let sprite;
-
-        if (defender === playerPokemon) {
-            sprite = player.sprite;
-            sprite.src =
-                "https://play.pokemonshowdown.com/sprites/ani-back/mimikyu-busted.gif";
-        } else {
-            sprite = opponent.sprite;
-            sprite.src =
-                "https://play.pokemonshowdown.com/sprites/ani/mimikyu-busted.gif";
-        }
-
+        defender.disguiseBroken = true;
+        defender.bustedSpriteFront = "https://play.pokemonshowdown.com/sprites/ani/mimikyu-busted.gif";
+        defender.bustedSpriteBack = "https://play.pokemonshowdown.com/sprites/ani-back/mimikyu-busted.gif";
+        const sprite = defender === playerPokemon ? player.sprite : opponent.sprite;
+        sprite.src = getSpriteUrl(defender, defender === playerPokemon);
     }
 
     return {
