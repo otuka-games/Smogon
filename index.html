@@ -6735,12 +6735,34 @@ if (
             case 'からをやぶる': attacker.statStages.attack = Math.min(6, attacker.statStages.attack + 2); attacker.statStages.spAttack = Math.min(6, attacker.statStages.spAttack + 2); attacker.statStages.speed = Math.min(6, attacker.statStages.speed + 2); attacker.statStages.defense = Math.max(-6, attacker.statStages.defense - 1); attacker.statStages.spDefense = Math.max(-6, attacker.statStages.spDefense - 1);  message = `${attacker.name} の こうげきと とくこうと すばやさが ぐーんとあがって ぼうぎょと とくぼうが さがった！`; break;
             case 'のろい': attacker.statStages.attack = Math.min(6, attacker.statStages.attack + 1); attacker.statStages.defense = Math.min(6, attacker.statStages.defense + 1); attacker.statStages.speed = Math.max(-6, attacker.statStages.speed - 1); message = `${attacker.name} の すばやさが さがり こうげきと ぼうぎょが あがった！`; break;
             case 'おにび': if (!defender.types.includes("ほのお") && defender.status === null) { defender.status = 'burn'; message = `あいて の ${defender.name} は やけどを おった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'さいみんじゅつ': if(defender.status === null) { defender.status = 'sleep'; defender.statusTurns = Math.floor(Math.random() * 3) + 2; message = `あいて の ${defender.name} は ねむってしまった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'Zさいみんじゅつ': if (defender.status === null) { defender.status = 'sleep'; message = `あいて の ${defender.name} は ねむった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'どくどく': if (!defender.types.includes("どく") && !defender.types.includes("はがね") && defender.status === null) { defender.status = 'toxic'; message = `あいて の ${defender.name} は もうどくを あびた！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'でんじは': if (!defender.types.includes("でんき") && !defender.types.includes("じめん") && defender.status === null) { defender.status = 'paralyze'; message = `あいて の ${defender.name} は まひに なった！`; } else { message = `しかし うまくきまらなかった！`; } break;
-            case 'ねむりごな' :
-            case 'きのこのほうし': if(!defender.types.includes("くさ") && defender.status === null) { defender.status = 'sleep'; defender.statusTurns = Math.floor(Math.random() * 3) + 2; message = `あいて の ${defender.name} は ねむってしまった！`; } else { message = `しかし うまくきまらなかった！`; } break;
+            case 'さいみんじゅつ':
+            case 'Zさいみんじゅつ':
+                if (!defender.hasSubstitute && canInflictSecondaryStatus(defender,'sleep')) {
+                    defender.status = 'sleep';
+                    defender.statusTurns = Math.floor(Math.random() * 3) + 2;
+                    message = `あいて の ${defender.name} は ねむってしまった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'どくどく':
+                if (!defender.hasSubstitute && canInflictSecondaryStatus(defender,'toxic')) {
+                    defender.status = 'toxic';
+                    message = `あいて の ${defender.name} は もうどくを あびた！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'でんじは':
+                if (!defender.hasSubstitute && !defender.types.includes('じめん') && canInflictSecondaryStatus(defender,'paralyze')) {
+                    defender.status = 'paralyze';
+                    message = `あいて の ${defender.name} は まひに なった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'ねむりごな':
+            case 'きのこのほうし':
+                if (!defender.hasSubstitute && !defender.types.includes('くさ') && canInflictSecondaryStatus(defender,'sleep')) {
+                    defender.status = 'sleep';
+                    defender.statusTurns = Math.floor(Math.random() * 3) + 2;
+                    message = `あいて の ${defender.name} は ねむってしまった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
             case 'オーロラベール':
 
     if (weather.type !== 'snow') {
