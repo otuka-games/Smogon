@@ -5971,9 +5971,16 @@ if (
     }
 
     // 本体ダメージ
+    const hpBeforeDamage = defender.currentHp;
     defender.currentHp = Math.max(0, defender.currentHp - damage);
     defender.lastDamageTaken = damage;
     defender.lastDamageCategory = move.category;
+    // きあいのタスキは満タンからの致死ダメージなら、通常技・連続技を問わず1HPで耐える。
+    if (defender.currentHp <= 0 && damage > 0 && defender.item?.name === 'きあいのタスキ' && !defender.item.used && hpBeforeDamage === defender.maxHp) {
+        defender.item.used = true;
+        defender.currentHp = 1;
+        await showMessage(`${defender.name} は きあいのタスキで もちこたえた！`);
+    }
 
     // はたきおとす：本体にダメージが通った場合のみ、落とせる持ち物を除去する。
     if (
@@ -7400,12 +7407,16 @@ if (hasOriginalStab || hasTeraStab) {
         if (defender.ability === 'マルチスケイル' && defender.currentHp === defender.maxHp && !defender.hasSubstitute) damage *= 0.5;
         if (defender.ability === 'あついしぼう' && (move.type === 'ほのお' || move.type === 'こおり')) damage *= 0.5;
         
-       const typeMultipliers = attackTypes.map(type =>
-    calculateTypeEffectiveness(type, defender.types)
-);
-
-const defenderTypesForDamage = defender.teraActive ? [defender.teraType] : defender.types;
-const typeMultiplier = Math.max(...attackTypes.map(type => calculateTypeEffectiveness(type, defenderTypesForDamage)));
+       const defenderTypesForDamage = defender.teraActive ? [defender.teraType] : defender.types;
+const typeMultiplier = attackTypes.reduce((moveMultiplier, attackingType) => {
+    const againstDefender = defenderTypesForDamage.reduce((defMultiplier, defendingType) => {
+        const multiplier = move.name === 'フリーズドライ' && attackingType === 'こおり' && defendingType === 'みず'
+            ? 2
+            : (typeChart[attackingType]?.[defendingType] ?? 1);
+        return defMultiplier * multiplier;
+    }, 1);
+    return moveMultiplier * againstDefender;
+}, 1);
        let actualTypeMultiplier = typeMultiplier;
 
 if (
