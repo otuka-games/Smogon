@@ -1954,12 +1954,13 @@ function determineOpponentItem(pokemon) {
     if (pokemon.baseAttack > pokemon.baseSpAttack) {
         const items = [
             'きあいのタスキ',
+            'こだわりハチマキ',
             'ちからのハチマキ',
             'しゅんそくスカーフ',
+            'こだわりスカーフ',
             'せんせいのツメ',
             'たいきゅうチョッキ',
             'きあいのハチマキ',
-
         ];
 
         return items[
@@ -1971,8 +1972,10 @@ function determineOpponentItem(pokemon) {
     if (pokemon.baseSpAttack > pokemon.baseAttack) {
         const items = [
             'きあいのタスキ',
+            'こだわりメガネ',
             'ものしりメガネ',
             'しゅんそくスカーフ',
+            'こだわりスカーフ',
             'せんせいのツメ',
             'たいきゅうチョッキ',
             'きあいのハチマキ',
@@ -6971,7 +6974,7 @@ function getPokemonSpeed(pokemon) {
         if (isAncientBoostActive(pokemon) && getAncientBoostStat(pokemon) === 'speed') speed *= 1.5;
         if (pokemon.status === 'paralyze') speed *= 0.5;
         if (pokemon.item && ['しゅんそくスカーフ','こだわりスカーフ'].includes(pokemon.item.name)) speed *= 1.5;
-        if (pokemon.ability && pokemon.ability.name === 'ききかいひ') speed *= 1.25;
+        if ((pokemon.ability?.name || pokemon.ability) === 'ききかいひ') speed *= 1.25;
         return speed;
     }
 
