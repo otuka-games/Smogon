@@ -2498,6 +2498,19 @@ function updatePokemonFloatVisual(pokemon,sprite) {
     const id = String(pokemon.id || '').toLowerCase();
     stage.classList.toggle('is-floating', pokemon.ability === 'ふゆう' || visuallyFloatingPokemon.has(id));
 }
+function canInflictSecondaryStatus(target, status) {
+    if (!target || (target.status != null && target.status !== 'none') || !status) return false;
+    const types = Array.isArray(target.types) ? target.types : [];
+    const ability = target.ability;
+    if (status === 'burn' && (types.includes('ほのお') || ability === 'みずのベール')) return false;
+    if (status === 'freeze' && (types.includes('こおり') || ability === 'マグマのよろい')) return false;
+    if (status === 'paralyze' && (types.includes('でんき') || ability === 'じゅうなん')) return false;
+    if ((status === 'poison' || status === 'toxic') && (types.includes('どく') || types.includes('はがね') || ability === 'めんえき')) return false;
+    if (status === 'sleep' && (ability === 'ふみん' || ability === 'やるき')) return false;
+    if (status === 'sleep' && field?.type === 'electric' && isPokemonGrounded(target)) return false;
+    if (field?.type === 'misty' && isPokemonGrounded(target)) return false;
+    return true;
+}
 function updateMoves() {
     movesContainer.innerHTML = "";
     moveTooltip.style.display = "none";
