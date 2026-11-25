@@ -7195,7 +7195,7 @@ btn.onmouseout = () => {
 
     // PokeAPIの第5世代BWアニメーションGIF。従来のドット絵と同じテイスト。
     const gen5AnimatedSpriteCache = new Map();
-    async /* CAP Pokémon idle motion: subtle sprite-native movement, matching BW pixel art */
+    /* CAP Pokémon idle motion: subtle sprite-native movement, matching BW pixel art */
     const capIdleMotionStyle = document.createElement('style');
     capIdleMotionStyle.textContent = `
       @keyframes cawmodorePixelIdle { 0%,100% { transform: translateY(0) rotate(0deg) scale(1); } 25% { transform: translateY(-1px) rotate(-1deg) scale(1.01); } 50% { transform: translateY(-2px) rotate(0.5deg) scale(1.015); } 75% { transform: translateY(-1px) rotate(1deg) scale(1.01); } }
@@ -7206,7 +7206,7 @@ btn.onmouseout = () => {
     `;
     document.head.appendChild(capIdleMotionStyle);
 
-function setPokemonSprite(img, pokemon, back = false) {
+async function setPokemonSprite(img, pokemon, back = false) {
         if (!img || !pokemon) return;
         const id = String(pokemon.id || '').toLowerCase();
         img.classList.remove('sprite-cawmodore-idle', 'sprite-voodoom-idle');
