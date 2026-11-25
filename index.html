@@ -971,13 +971,14 @@ function initZData(pokemon) {
 // ===== 使用可能判定 =====
 function canUseZMove(pokemon) {
     return (
+        !pokemon.dynamaxActive && !pokemon.pendingDynamax &&
         !pokemon.usedZMove &&
         pokemon.item?.name === "Zクリスタル"
     );
 }
 
 function canMegaEvolve(pokemon) {
-    if (pokemon.megaEvolved) return false;
+    if (pokemon.megaEvolved || pokemon.dynamaxActive || pokemon.pendingDynamax) return false;
 
     const mega = MEGA_DATA[pokemon.name];
     if (!mega) return false;
@@ -2396,7 +2397,7 @@ function getDynamaxMovePower(basePower) {
     return 150;
 }
 function makeDynamaxMove(pokemon, move) {
-    if (!dynamaxRuleEnabled || !pokemon?.dynamaxActive || !move) return move;
+    if (!dynamaxRuleEnabled || !(pokemon?.dynamaxActive || pokemon?.pendingDynamax) || !move) return move;
     if (move.category === 'status' || !move.power || move.power <= 0) {
         return { ...move, name:'まもる', displayName:'ダイウォール', category:'status', type:'ノーマル', power:0, accuracy:101, priority:4, isMaxGuard:true, isDynamaxMove:true, originalMoveName:move.name };
     }
@@ -2459,6 +2460,7 @@ async function activateDynamax(pokemon,isPlayer) {
     pokemon.dynamaxUsed=true;
     pokemon.pendingDynamax=false;
     pokemon.dynamaxActive=true;
+    pokemon.choiceLockedMove = null;
     pokemon.dynamaxTurns=3;
     pokemon.originalMaxHp=pokemon.maxHp;
     pokemon.maxHp*=2;
@@ -2974,10 +2976,10 @@ if (opponentPokemon.pendingTera) await teraEvolve(opponentPokemon, false);
 if (playerPokemon.pendingDynamax) await activateDynamax(playerPokemon, true);
 if (dynamaxRuleEnabled && !opponentPokemon.dynamaxUsed && !opponentPokemon.dynamaxActive && !opponentPokemon.pendingDynamax && Math.random() < (difficulty === 'hard' ? 0.25 : 0.12)) opponentPokemon.pendingDynamax = true;
 if (opponentPokemon.pendingDynamax) await activateDynamax(opponentPokemon, false);
+const opponentOriginalMove = opponentMove;
+        if(opponentOriginalMove.name !== 'わるあがき') opponentOriginalMove.currentPp--;
 playerMove = makeDynamaxMove(playerPokemon, playerMove);
 opponentMove = makeDynamaxMove(opponentPokemon, opponentMove);
-
-        if(opponentMove.name !== 'わるあがき') opponentMove.currentPp--;
         let playerClaw = false;
 let opponentClaw = false;
 
