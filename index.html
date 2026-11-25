@@ -2939,6 +2939,8 @@ opponentPokemon.hasMoved = false;
         disableMoves();
         playerPokemon.isFlinched = false;
         opponentPokemon.isFlinched = false;
+        playerPokemon.isMaxGuard = false;
+        opponentPokemon.isMaxGuard = false;
         
         if (playerPokemon.isRampaging) {
             playerPokemon.rampageTurns--;
@@ -6069,8 +6071,8 @@ if (
     
     async function applyDamage(attacker, defender, damage, move, defenderUI) {
 
-    // まもる
-    if (defender.isProtected) {
+    // まもる：ダイマックスわざは通常のまもるで1/4、ダイウォールは完全防御。
+    if (defender.isProtected && (defender.isMaxGuard || !move?.isDynamaxMove)) {
 
     // ふかしのこぶしなら貫通
     if (attacker.ability !== "ふかしのこぶし") {
@@ -6104,12 +6106,16 @@ if (
 
         return { hit: false };
     }
-}
+    if (defender.isProtected && move?.isDynamaxMove && !defender.isMaxGuard) {
+        damage = Math.max(1, Math.floor(damage / 4));
+        await showMessage('まもるで ダイマックスわざの ダメージを へらした！');
+    }
 
     // みがわり
     if (defender.hasSubstitute && !move.isSound) {
         defender.substituteHp -= damage;
         await showMessage(`${defender.name} の みがわりが こうげきを うけた！`);
+        if (move?.isDynamaxMove && damage > 0) await applyDynamaxMoveEffect(attacker, defender, move);
 
         if (defender.substituteHp <= 0) {
             defender.hasSubstitute = false;
@@ -6145,6 +6151,7 @@ if (
     }
 
     updateHpBars();
+    if (move?.isDynamaxMove && damage > 0) await applyDynamaxMoveEffect(attacker, defender, move);
 
     // ⭐ ここでまず defender の瀕死チェック
     if (defender.currentHp <= 0) {
@@ -6657,6 +6664,7 @@ if (
 
         if (Math.random() < 1/3) {
             attacker.isProtected = true;
+            attacker.isMaxGuard = !!move.isMaxGuard;
             message = `${attacker.name} は まもりの たいせいに はいった！`;
         } else {
             attacker.isProtected = false;
@@ -6666,6 +6674,7 @@ if (
     } else {
 
         attacker.isProtected = true;
+        attacker.isMaxGuard = !!move.isMaxGuard;
         message = `${attacker.name} は まもりの たいせいに はいった！`;
     }
 
