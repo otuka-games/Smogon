@@ -4601,6 +4601,10 @@ function getOpponentMove() {
 
     async function handleAttack(attacker, defender, move, isFirstAttacker) {
         const isPlayerAttacking = attacker === playerPokemon;
+        if (field.type === 'psyco' && (move.priority || 0) > 0 && isPokemonGrounded(defender)) {
+            await showMessage('サイコフィールドに まもられて 先制技が きかなかった！');
+            return false;
+        }
         const defenderUI = isPlayerAttacking ? opponent : player;
         const hpBeforeDamage = defender.currentHp;
 if (move.isDynamicType) {
@@ -6287,8 +6291,30 @@ if (
         if (move.accuracy < 101 && Math.random() * 100 >= move.accuracy) {
             await showMessage(`しかし うまくきまらなかった！`); return;
         }
+        const sleepMoves = ['さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび'];
+        const statusMoves = ['おにび', 'でんじは', 'どくどく', 'へびにらみ', 'さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび', 'あやしいひかり', 'いばる'];
+        if (isPokemonGrounded(defender) && ((field.type === 'electric' && sleepMoves.includes(move.name)) || (field.type === 'misty' && statusMoves.includes(move.name))) && !['ねむる'].includes(move.name)) {
+            await showMessage('フィールドの こうかで 状態変化を うけない！');
+            return;
+        }
         let message = '';
         switch(move.name) {
+            case 'サイコフィールド':
+                field = { type: 'psyco', turns: 5 };
+                message = 'あしもとが ふしぎなかんじに なった！';
+                break;
+            case 'グラスフィールド':
+                field = { type: 'grass', turns: 5 };
+                message = 'あしもとに くさが おいしげった！';
+                break;
+            case 'エレキフィールド':
+                field = { type: 'electric', turns: 5 };
+                message = 'あしもとに 電気が かけめぐる！';
+                break;
+            case 'ミストフィールド':
+                field = { type: 'misty', turns: 5 };
+                message = 'あしもとに きりが たちこめた！';
+                break;
             case '天の祈り':
             case 'はねやすめ':
             case 'じこさいせい':
@@ -6476,10 +6502,20 @@ if (opponentPokemon.ability === 'ムラッけ') {
 }
         if (playerPokemon.isProtected) playerPokemon.isProtected = false;
         if (opponentPokemon.isProtected) opponentPokemon.isProtected = false;
-        if(field.type === 'psyco') {
-             field.turns--;
-    if (field.turns === 0) {
+        if (['psyco', 'grass', 'electric', 'misty'].includes(field.type)) {
+    if (field.type === 'grass') {
+        for (const pokemon of [playerPokemon, opponentPokemon]) {
+            if (pokemon.currentHp > 0 && isPokemonGrounded(pokemon)) {
+                const heal = Math.max(1, Math.floor(pokemon.maxHp / 16));
+                pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+            }
+        }
+        updateHpBars();
+    }
+    field.turns--;
+    if (field.turns <= 0) {
         field.type = 'none';
+        field.turns = 0;
         await showMessage('あしもとは もとに もどった！');
         updateFieldIndicator();
     }
@@ -6829,7 +6865,13 @@ async function applyBerryBasketEffect(pokemon, isPlayer) {
         return 2 / (2 - stage);
     }
 
-    function getPokemonSpeed(pokemon) {
+    function isPokemonGrounded(pokemon) {
+    if (!pokemon) return false;
+    const types = Array.isArray(pokemon.types) ? pokemon.types : [pokemon.types].filter(Boolean);
+    return !types.includes('ひこう') && pokemon.ability !== 'ふゆう';
+}
+
+function getPokemonSpeed(pokemon) {
         let speed = pokemon.speed * getStatModifier(pokemon.statStages.speed);
         if (pokemon.status === 'paralyze') speed *= 0.5;
         if (pokemon.item && pokemon.item.name === 'しゅんそくスカーフ') {
@@ -6897,10 +6939,10 @@ async function applyGeigekiScopeOnEnter(pokemon) {
 // スカイスキン
 if (
     attacker.ability === "スカイスキン" &&
-    move.type === "ノーマル" &&
+    attackTypes.includes("ノーマル") &&
     move.category !== "status"
 ) {
-    attackType = "ひこう";
+    attackTypes = attackTypes.map(type => type === "ノーマル" ? "ひこう" : type);
 }
         let effectivenessMessage = '';
         const level = 50;
@@ -7097,17 +7139,20 @@ if (weather.type === 'rain') {
     if (move.type === 'みず') movePower *= 1.5;
     if (move.type === 'ほのお') movePower *= 0.5;
 };
-if (field.type === 'psyco') {
-
-    // エスパー技強化
-    if (move.type === 'エスパー') {
-        movePower *= 1.6;
-    }
-
-    // 先制技弱体化
-    if (move.priority > 0) {
-        movePower *= 0.0001;
-    }
+if (field.type === 'psyco' && isPokemonGrounded(attacker) && attackTypes.includes('エスパー')) {
+    movePower *= 1.3;
+}
+if (field.type === 'grass' && isPokemonGrounded(attacker) && attackTypes.includes('くさ')) {
+    movePower *= 1.3;
+}
+if (field.type === 'electric' && isPokemonGrounded(attacker) && attackTypes.includes('でんき')) {
+    movePower *= 1.3;
+}
+if (field.type === 'misty' && isPokemonGrounded(defender) && attackTypes.includes('ドラゴン')) {
+    movePower *= 0.5;
+}
+if (field.type === 'grass' && isPokemonGrounded(defender) && ['じしん', 'じならし', 'マグニチュード'].includes(move.name)) {
+    movePower *= 0.5;
 }
 
         let damage = Math.floor(Math.floor(Math.floor(2 * level / 5 + 2) * movePower * attackStat / defenseStat) / 50) + 2;
@@ -7379,6 +7424,21 @@ isBattleInProgress = false;
         field.turns = 5;
         await showMessage('あしもとが ふしぎなかんじに なった！');
     }
+    if(playerPokemon.ability === "グラスメイカー" || opponentPokemon.ability === "グラスメイカー") {
+        field.type = 'grass';
+        field.turns = 5;
+        await showMessage('あしもとに くさが おいしげった！');
+    }
+    if(playerPokemon.ability === "エレキメイカー" || opponentPokemon.ability === "エレキメイカー") {
+        field.type = 'electric';
+        field.turns = 5;
+        await showMessage('あしもとに 電気が かけめぐる！');
+    }
+    if(playerPokemon.ability === "ミストメイカー" || opponentPokemon.ability === "ミストメイカー") {
+        field.type = 'misty';
+        field.turns = 5;
+        await showMessage('あしもとに きりが たちこめた！');
+    }
 
     updateWeatherIndicator();
     updateFieldIndicator();
@@ -7400,10 +7460,16 @@ isBattleInProgress = false;
     }
 }
 function updateFieldIndicator() {
-  if (field.type === 'psyco') {
-        fieldIndicator.textContent = '状態: サイコフィールド';
+    const labels = {
+        psyco: 'サイコフィールド',
+        grass: 'グラスフィールド',
+        electric: 'エレキフィールド',
+        misty: 'ミストフィールド'
+    };
+    if (labels[field.type]) {
+        fieldIndicator.textContent = '状態: ' + labels[field.type];
         fieldIndicator.style.display = 'block';
-  } else {    
+    } else {
         fieldIndicator.style.display = 'none';
     }
 }
