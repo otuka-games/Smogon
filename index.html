@@ -7649,7 +7649,8 @@ const hasTeraStab = attacker.teraActive && attackTypes.includes(attacker.teraTyp
 if (hasOriginalStab || hasTeraStab) {
     let stabMultiplier = 1.5;
     if (attacker.ability === 'てきおうりょく') {
-        stabMultiplier = hasTeraStab && originalTypes.includes(attacker.teraType) ? 2.25 : (hasOriginalStab ? 2 : 1.5);
+        if (hasTeraStab && originalTypes.includes(attacker.teraType)) stabMultiplier = 2.25;
+        else if (hasTeraStab || hasOriginalStab) stabMultiplier = 2;
     } else if (hasTeraStab && originalTypes.includes(attacker.teraType)) stabMultiplier = 2;
     else if (hasTeraStab) stabMultiplier = 1.5;
     damage = Math.floor(damage * stabMultiplier);
