@@ -2456,7 +2456,7 @@ async function applyDynamaxMoveEffect(attacker, defender, move) {
     updateStatDisplay(opponentPokemon,document.getElementById('opponent-stat-display'));
 }
 async function activateDynamax(pokemon,isPlayer) {
-    if (!dynamaxRuleEnabled || !pokemon || pokemon.dynamaxUsed || pokemon.dynamaxActive) return false;
+    if (!dynamaxRuleEnabled || !pokemon || pokemon.megaEvolved || pokemon.dynamaxUsed || pokemon.dynamaxActive) return false;
     pokemon.dynamaxUsed=true;
     pokemon.pendingDynamax=false;
     pokemon.dynamaxActive=true;
@@ -2550,12 +2550,13 @@ button.onmouseout = () => {
     });
 
     // ダイマックス：1試合1回、3ターン。技を選ぶ前に発動を予約。
-    if (dynamaxRuleEnabled && !playerPokemon.dynamaxUsed && !playerPokemon.dynamaxActive) {
+    if (dynamaxRuleEnabled && !playerPokemon.dynamaxUsed && !playerPokemon.dynamaxActive && !playerPokemon.pendingMega) {
         const dmaxBtn = document.createElement('button');
         dmaxBtn.textContent = playerPokemon.pendingDynamax ? 'ダイマックスを取りやめる' : 'ダイマックス';
         dmaxBtn.className = 'border-2 border-red-500 bg-red-100 text-slate-900 rounded p-1 font-bold';
         dmaxBtn.onclick = () => {
             playerPokemon.pendingDynamax = !playerPokemon.pendingDynamax;
+            if (playerPokemon.pendingDynamax) playerPokemon.pendingMega = false;
             updateMoves();
             if (playerPokemon.pendingDynamax) {
                 battleMenu.style.display = 'none';
@@ -2601,6 +2602,7 @@ button.onmouseout = () => {
 
         megaBtn.onclick = () => {
             playerPokemon.pendingMega = true;
+            playerPokemon.pendingDynamax = false;
             showMessage("どの技で メガシンカする？");
         };
 
@@ -2974,7 +2976,7 @@ if (teraRuleEnabled && !opponentPokemon.teraUsed && !opponentPokemon.teraActive 
 if (playerPokemon.pendingTera) await teraEvolve(playerPokemon, true);
 if (opponentPokemon.pendingTera) await teraEvolve(opponentPokemon, false);
 if (playerPokemon.pendingDynamax) await activateDynamax(playerPokemon, true);
-if (dynamaxRuleEnabled && !opponentPokemon.dynamaxUsed && !opponentPokemon.dynamaxActive && !opponentPokemon.pendingDynamax && Math.random() < (difficulty === 'hard' ? 0.25 : 0.12)) opponentPokemon.pendingDynamax = true;
+if (dynamaxRuleEnabled && !opponentPokemon.pendingMega && !opponentPokemon.megaEvolved && !opponentPokemon.dynamaxUsed && !opponentPokemon.dynamaxActive && !opponentPokemon.pendingDynamax && Math.random() < (difficulty === 'hard' ? 0.25 : 0.12)) opponentPokemon.pendingDynamax = true;
 if (opponentPokemon.pendingDynamax) await activateDynamax(opponentPokemon, false);
 const opponentOriginalMove = opponentMove;
         if(opponentOriginalMove.name !== 'わるあがき') opponentOriginalMove.currentPp--;
