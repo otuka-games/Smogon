@@ -1272,8 +1272,7 @@ function getShownName(pokemon){
         TERASTAL_TYPES.forEach(type => {
             const btn = document.createElement('button');
             btn.textContent = type;
-            btn.className = 'rounded-lg border px-2 py-2 text-sm font-bold shadow-sm';
-            btn.style.background = typeColors[type] || '#e5e7eb';
+            btn.className = 'rounded-lg border px-2 py-2 text-sm font-bold shadow-sm ' + (typeColors[type] || 'bg-gray-200 text-black');
             btn.onclick = () => {
                 selectedPlayerTeraType = type;
                 teraTypePicker.classList.add('hidden');
@@ -7088,7 +7087,6 @@ async function teraEvolve(pokemon, isPlayer) {
     pokemon.types = [pokemon.teraType];
     updateHpBars();
     await showMessage(`${pokemon.name} は テラスタルした！ ${pokemon.teraType}タイプに へんかした！`);
-    if (isPlayer) updateMoves();
     return true;
 }
 
@@ -7412,7 +7410,7 @@ const typeMultiplier = Math.max(...attackTypes.map(type => calculateTypeEffectiv
 
 if (
     attacker.ability === "きもったま" &&
-    defender.types.includes("ゴースト") &&
+    defenderTypesForDamage.includes("ゴースト") &&
     (
         attackType === "ノーマル" ||
         attackType === "かくとう"
