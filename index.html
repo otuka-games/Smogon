@@ -1480,21 +1480,6 @@ class="border-2 border-gray-800 rounded p-1 btn-neutral">
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // 起動ボタンを初期化の最初に登録。後続の初期化でエラーが起きても押せるようにする。
-    const earlyStartButton = document.getElementById('start-battle-button');
-    if (earlyStartButton) {
-        earlyStartButton.addEventListener('click', () => {
-            try {
-                if (typeof startBattleFromOpening === 'function') startBattleFromOpening();
-                else alert('起動処理が読み込まれていません。');
-            } catch (error) {
-                alert('起動エラー: ' + (error?.message || error));
-            }
-        });
-    }
-    window.addEventListener('error', (event) => {
-        console.error(event.error || event.message);
-    });
     // localStorage が無効・容量超過・プライベートモード等でもゲーム本体を停止させない。
     const safeStorage = {
         getItem(key) {
