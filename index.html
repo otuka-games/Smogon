@@ -454,9 +454,9 @@ surrenderButton.onclick = () => {
         'こだわりメガネ': { name: 'こだわりメガネ', description: '特殊技の威力が1.5倍。技が固定。'},
         'こだわりスカーフ': { name: 'こだわりスカーフ', description: '素早さが1.5倍。技が固定。'},
         'ちからのハチマキ': { name: 'ちからのハチマキ', description: '物理技の威力が1.2倍。'},
-        'ものしりメガネ': { name: 'ものしりメガネ', description: '特殊技の威力が1.5倍。'},
+        'ものしりメガネ': { name: 'ものしりメガネ', description: '特殊技の威力が1.2倍。'},
         'しゅんそくスカーフ': { name: 'しゅんそくスカーフ', description: '持つと素早さが1.5倍。'},
-        'ゴツゴツメット': { name: 'ゴツゴツメット', description: '直接触れたら1/6のダメージ'},
+        'ゴツゴツメット': { name: 'ゴツゴツメット', description: '直接触れたら最大HPの1/8のダメージ'},
         'たいきゅうチョッキ': { name: 'たいきゅうチョッキ', description: '特防が1.5倍。'},
         'しんかのきせき': { name: 'しんかのきせき', description: '進化できるポケモンの防御・特防が1.5倍。'},
         'ブーストエナジー': { name: 'ブーストエナジー', description: 'こだいかっせいの能力を上げる。'},
@@ -5921,7 +5921,7 @@ if (
     // ⭐ 接触ダメージ
     if (move.isContact) {
         if (defender.item?.name === 'ゴツゴツメット') {
-            const recoil = Math.floor(attacker.maxHp / 6);
+            const recoil = Math.floor(attacker.maxHp / 8);
             attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
             await showMessage(`${attacker.name} は ゴツゴツメットで ダメージをうけた！`);
         }
@@ -7232,7 +7232,7 @@ if (defender.ability === "わざわいのうつわ") {
         if (attacker.ability === 'てつのこぶし' && move.isPunch) movePower *= 1.2;
         if (attacker.ability === 'りゅうのあご' &&((Array.isArray(move.type) && move.type.includes('ドラゴン')) ||move.type === 'ドラゴン')) {movePower *= 1.5;}
         if (attacker.ability === 'りゅうのあご' &&((Array.isArray(move.type) && move.type.includes('ほのお')) ||move.type === 'ほのお')) {movePower *= 1.5;}
-        if (attacker.item && attacker.item.name === 'ちからのハチマキ' && move.category === 'physical') movePower *= 1.5;
+        if (attacker.item && attacker.item.name === 'ちからのハチマキ' && move.category === 'physical') movePower *= 1.2;
         if (attacker.item && attacker.item.name === 'ものしりメガネ' && move.category === 'special') movePower *= 1.2;
         if (attacker.item?.name === 'こだわりハチマキ' && move.category === 'physical') movePower *= 1.5;
         if (attacker.item?.name === 'こだわりメガネ' && move.category === 'special') movePower *= 1.5;
