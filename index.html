@@ -149,6 +149,11 @@ body { background:#eaf3ff !important; color:var(--sim-ink); font-family:system-u
  #battle-menu,#moves-container { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
  #battle-status-stack { max-width:45% !important; }
 }
+
+.pokemon-sprite-stage.is-floating img { animation:pokemon-hover 2.2s ease-in-out infinite; transform:translateY(-9px); transform-origin:50% 90%; }
+@keyframes pokemon-hover { 0%,100% { transform:translateY(-8px); } 50% { transform:translateY(-17px); } }
+.pokemon-sprite-stage.is-dynamaxed img { filter:drop-shadow(0 0 14px rgba(239,68,68,.75)); }
+.pokemon-sprite-stage.is-dynamaxed { transform:scale(1.08); transform-origin:50% 90%; }
 </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -253,7 +258,7 @@ body { background:#eaf3ff !important; color:var(--sim-ink); font-family:system-u
 <div id="opponent-stat-display" class="text-xs mt-1 text-left"></div>
 
                 </div>
-                <div class="relative">
+                <div class="relative pokemon-sprite-stage">
                     <div id="opponent-tooltip" class="absolute top-full mt-2 hidden nes-container bg-white/95 p-2 text-xs z-10 w-48 text-center left-1/2 -translate-x-1/2"></div>
                     <img id="opponent-sprite" src="" alt="Opponent Pokemon">
                 </div>
@@ -261,7 +266,7 @@ body { background:#eaf3ff !important; color:var(--sim-ink); font-family:system-u
 
 <div id="player-area" class="absolute bottom-32 sm:bottom-36 left-12 w-2/5 max-w-[300px] flex flex-col items-center">
 
-    <div class="relative" style="top:10px;">
+    <div class="relative pokemon-sprite-stage" style="top:10px;">
         <div id="player-tooltip" class="absolute bottom-full mb-2 hidden nes-container bg-white/95 p-2 text-xs z-10 w-48 text-center left-1/2 -translate-x-1/2"></div>
         <img id="player-sprite" src="" alt="Player Pokemon">
     </div>
@@ -2288,9 +2293,8 @@ if (opponentPokemon.ability === "たましいのうろこ") {
 
     const sprite = isPlayer ? player.sprite : opponent.sprite;
 
-    sprite.src = isPlayer
-        ? mega.spriteBack
-        : mega.spriteFront;
+    sprite.src = getSpriteUrl(pokemon, isPlayer);
+    updatePokemonFloatVisual(pokemon, sprite);
 
     await showMessage(`${oldName} は メガシンカした！`);
     if (pokemon.ability === "ブレインフォース") {
@@ -2362,6 +2366,8 @@ opponent.sprite.src =
 
         const opponentSizeClasses = opponentPokemon.id === 'necrozma-ultra' || opponentPokemon.id === 'eternatus-eternamax' ? 'h-28 sm:h-36 md:h-44' : 'h-24 sm:h-32 md:h-40';
         opponent.sprite.className = `mx-auto ${opponentSizeClasses} object-contain transition-all duration-1000`;
+        updatePokemonFloatVisual(playerPokemon, player.sprite);
+        updatePokemonFloatVisual(opponentPokemon, opponent.sprite);
         
         screenOverlay.classList.remove('active');
         gameOverScreen.style.display = 'none';
@@ -2461,6 +2467,8 @@ async function activateDynamax(pokemon,isPlayer) {
     pokemon.pendingDynamax=false;
     pokemon.dynamaxActive=true;
     pokemon.choiceLockedMove = null;
+    const sprite = isPlayer ? player.sprite : opponent.sprite;
+    sprite.closest('.pokemon-sprite-stage')?.classList.add('is-dynamaxed');
     pokemon.dynamaxTurns=3;
     pokemon.originalMaxHp=pokemon.maxHp;
     pokemon.maxHp*=2;
@@ -2474,11 +2482,21 @@ async function endDynamax(pokemon,isPlayer) {
     if (!pokemon?.dynamaxActive) return;
     pokemon.dynamaxActive=false;
     pokemon.dynamaxTurns=0;
+    const sprite = isPlayer ? player.sprite : opponent.sprite;
+    sprite.closest('.pokemon-sprite-stage')?.classList.remove('is-dynamaxed');
     pokemon.maxHp=pokemon.originalMaxHp || Math.floor(pokemon.maxHp/2);
     pokemon.currentHp=pokemon.currentHp<=0?0:Math.min(pokemon.maxHp,Math.ceil(pokemon.currentHp/2));
     document.getElementById(isPlayer?'player-max-hp':'opponent-max-hp').textContent=pokemon.maxHp;
     updateHpBars();
     await showMessage(`${pokemon.name} の ダイマックスが とけた！`);
+}
+const visuallyFloatingPokemon = new Set(['magnemite','magneton','magnezone','koffing','weezing','gastly','haunter','gengar','misdreavus','unown','lunatone','solrock','baltoy','claydol','duskull','chimecho','latias','latios','castform','drifloon','drifblim','uxie','mesprit','azelf','cresselia','rotom','yamask','cofagrigus','elgyem','beheeyem','litwick','lampent','chandelure','hydreigon','flabebe','floette','florges','sylveon','carbink','klefki','phantump','trevenant','pumpkaboo','gourgeist','xerneas','yveltal','hoopa','volcanion','magearna','necrozma','lunala','solgaleo','poipole','naganadel','blacephalon','zeraora','eternatus','calyrex','enamorus','flittle','espathra','tinkatink','tinkatuff','tinkaton','ceruledge','armarouge','mimikyu-busted']);
+function updatePokemonFloatVisual(pokemon,sprite) {
+    if (!pokemon || !sprite) return;
+    const stage = sprite.closest('.pokemon-sprite-stage');
+    if (!stage) return;
+    const id = String(pokemon.id || '').toLowerCase();
+    stage.classList.toggle('is-floating', pokemon.ability === 'ふゆう' || visuallyFloatingPokemon.has(id));
 }
 function updateMoves() {
     movesContainer.innerHTML = "";
@@ -7364,6 +7382,7 @@ const defStageFix = (stage) =>
         defender.bustedSpriteBack = "https://play.pokemonshowdown.com/sprites/ani-back/mimikyu-busted.gif";
         const sprite = defender === playerPokemon ? player.sprite : opponent.sprite;
         sprite.src = getSpriteUrl(defender, defender === playerPokemon);
+        updatePokemonFloatVisual(defender, sprite);
     }
 
     return {
