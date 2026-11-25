@@ -6782,7 +6782,22 @@ if (
                 }
                 updateHpBars();
                 break;
-            case 'あくび': message = `あいて の ${defender.name} は ねむけに おそわれた！`; break;
+            case 'へびにらみ':
+                if (!defender.hasSubstitute && defender.types && !defender.types.includes('でんき') && canInflictSecondaryStatus(defender, 'paralyze')) {
+                    defender.status = 'paralyze';
+                    message = `あいて の ${defender.name} は まひに なった！`;
+                } else message = 'しかし うまくきまらなかった！';
+                break;
+            case 'あくび': {
+                if ((field.type === 'misty' || field.type === 'electric') && isPokemonGrounded(defender)) message = 'しかし フィールドに まもられている！';
+                else if (defender.status && defender.status !== 'none') message = 'しかし うまくきまらなかった！';
+                else if (['ふみん','やるき'].includes(defender.ability)) message = `しかし ${defender.name} には きかなかった！`;
+                else {
+                    defender.yawnTurns = 2;
+                    message = `あいて の ${defender.name} は ねむけに おそわれた！`;
+                }
+                break;
+            }
             case 'あやしいひかり':
             case 'いばる': {
                 if (move.name === 'いばる') defender.statStages.attack = Math.min(6, (defender.statStages.attack || 0) + 2);
@@ -6842,7 +6857,22 @@ updateStatDisplay(opponentPokemon, document.getElementById('opponent-stat-displa
 }
     }
 
-   async function handleEndOfTurnEffects() {
+   async function handleYawnEffect(pokemon) {
+    if (!pokemon || !pokemon.yawnTurns || pokemon.currentHp <= 0) return false;
+    pokemon.yawnTurns--;
+    if (pokemon.yawnTurns <= 0 && (!pokemon.status || pokemon.status === 'none')) {
+        if (['ふみん','やるき'].includes(pokemon.ability) || ((field.type === 'electric' || field.type === 'misty') && isPokemonGrounded(pokemon))) {
+            await showMessage(`${pokemon.name} は ねむらなかった！`);
+        } else {
+            pokemon.status = 'sleep';
+            pokemon.statusTurns = Math.floor(Math.random() * 3) + 2;
+            await showMessage(`${pokemon.name} は ねむってしまった！`);
+            updateStatusMarkers();
+        }
+    }
+    return false;
+}
+async function handleEndOfTurnEffects() {
         async function applySpeedBoost(pokemon) {
         if (pokemon.ability === "かそく") {
         // すでに最大ランクならスキップ（+6まで）
@@ -7089,6 +7119,8 @@ if (opponentPokemon.mummyTurns > 0 && opponentPokemon.currentHp > 0) {
         await showMessage(`ミイラのしばりの こうかが きれた！`);
     }
 }
+        if (await handleYawnEffect(playerPokemon)) return true;
+        if (await handleYawnEffect(opponentPokemon)) return true;
         if (await handleStatusDamage(playerPokemon, true)) return true;
         if (await handleStatusDamage(opponentPokemon, false)) return true;
         if (await applyBerryBasketEffect(playerPokemon, true)) return true;
