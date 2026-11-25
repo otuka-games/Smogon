@@ -7542,6 +7542,43 @@ isBattleInProgress = false;
     showMessage('どうする？', 500);
 }
     async function handleAbilityEffectsOnEntry() {
+    // Current simulator's entry-trigger abilities, adapted to the preserved 1v1 field.
+    const abilityStatLabels = { attack:'こうげき', defense:'ぼうぎょ', spAttack:'とくこう', spDefense:'とくぼう', speed:'すばやさ' };
+    for (const pokemon of [playerPokemon, opponentPokemon]) {
+        if (pokemon.ability === 'こだいかっせい' && pokemon.item?.name === 'ブーストエナジー' && !pokemon.boostEnergyConsumed) {
+            pokemon.boostEnergyConsumed = true;
+            pokemon.ancientBoostActivated = true;
+            const boostedStat = getAncientBoostStat(pokemon);
+            await showMessage(`${pokemon.name} の こだいかっせい！`);
+            await showMessage(`${abilityStatLabels[boostedStat] || '能力'}が上がった！`);
+        }
+    }
+    if (playerPokemon.ability === 'いかく' && !['クリアボディ','しろいけむり','メタルプロテクト','きもったま','せいしんりょく'].includes(opponentPokemon.ability)) {
+        opponentPokemon.statStages.attack = Math.max(-6, opponentPokemon.statStages.attack - 1);
+        await showMessage(`${playerPokemon.name} の いかく！ あいての こうげきが さがった！`);
+        updateStatDisplay(opponentPokemon, document.getElementById('opponent-stat-display'));
+    }
+    if (opponentPokemon.ability === 'いかく' && !['クリアボディ','しろいけむり','メタルプロテクト','きもったま','せいしんりょく'].includes(playerPokemon.ability)) {
+        playerPokemon.statStages.attack = Math.max(-6, playerPokemon.statStages.attack - 1);
+        await showMessage(`あいての ${opponentPokemon.name} の いかく！ こうげきが さがった！`);
+        updateStatDisplay(playerPokemon, document.getElementById('player-stat-display'));
+    }
+    for (const [pokemon, foe, isPlayer] of [[playerPokemon,opponentPokemon,true],[opponentPokemon,playerPokemon,false]]) {
+        const label = isPlayer ? 'じぶんの' : 'あいての';
+        const display = document.getElementById(isPlayer ? 'player-stat-display' : 'opponent-stat-display');
+        if (pokemon.ability === 'ダウンロード') {
+            const boostStat = foe.defense < foe.spDefense ? 'attack' : 'spAttack';
+            pokemon.statStages[boostStat] = Math.min(6, pokemon.statStages[boostStat] + 1);
+            await showMessage(`${label} ${pokemon.name} の ダウンロード！ ${abilityStatLabels[boostStat]}が あがった！`);
+            updateStatDisplay(pokemon, display);
+        }
+        if (['かたいつぼ','たましいのうろこ'].includes(pokemon.ability)) {
+            pokemon.statStages.defense = Math.min(6, pokemon.statStages.defense + 1);
+            pokemon.statStages.spDefense = Math.min(6, pokemon.statStages.spDefense + 1);
+            await showMessage(`${label} ${pokemon.name} の ${pokemon.ability}！ ぼうぎょと とくぼうが あがった！`);
+            updateStatDisplay(pokemon, display);
+        }
+    }
     if(playerPokemon.ability === "すなおこし" || opponentPokemon.ability === "すなおこし") {
         weather.type = 'sandstorm';
         weather.turns = 5;
