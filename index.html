@@ -114,7 +114,42 @@
         background-size: cover;
         background-position: center;
     }
-    </style>
+    
+/* Current simulator visual style: blue-toned panels, crisp pixel sprites and responsive battle layout */
+:root { --sim-blue:#dbeafe; --sim-blue-strong:#2563eb; --sim-ink:#172033; --sim-panel:#f8fbff; }
+body { background:#eaf3ff !important; color:var(--sim-ink); font-family:system-ui,'Noto Sans JP',sans-serif !important; }
+#game-container { max-width:1120px !important; margin-inline:auto !important; }
+#selection-screen,#item-selection-screen,#opponent-selection-screen,#opponent-item-selection-screen,#difficulty-selection-screen {
+  background:linear-gradient(180deg,#f8fbff,#e7f1ff) !important; border:1px solid #b9d4f5 !important; border-radius:18px !important; box-shadow:0 5px 18px rgba(38,92,165,.12) !important;
+}
+#selection-title,#item-selection-title,#opponent-item-selection-title { color:#1d4ed8 !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:800 !important; letter-spacing:.02em; }
+.pokemon-card,.item-card,.difficulty-card { border:1px solid #cbd5e1 !important; border-radius:14px !important; background:linear-gradient(180deg,#fff,#eff6ff) !important; box-shadow:0 3px 0 rgba(30,64,175,.12) !important; padding:10px !important; color:#172033 !important; font-weight:700; transition:transform .15s,box-shadow .15s; }
+.pokemon-card:hover,.item-card:hover,.difficulty-card:hover { transform:translateY(-2px); border-color:#60a5fa !important; box-shadow:0 6px 12px rgba(37,99,235,.15) !important; }
+.pokemon-card img { width:100%; height:84px; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; }
+#battle-screen { border:1px solid #b9d4f5 !important; border-radius:20px !important; box-shadow:0 6px 20px rgba(38,92,165,.16) !important; background:linear-gradient(180deg,#e8f4ff 0%,#f8fbff 100%) !important; overflow:hidden; }
+#opponent-area,#player-area { max-width:330px !important; }
+#opponent-area .nes-container,#player-area > .nes-container { border:1px solid #bfd4ec !important; border-radius:13px !important; box-shadow:0 3px 0 rgba(30,64,175,.12) !important; background:rgba(255,255,255,.94) !important; color:#172033 !important; }
+#opponent-sprite,#player-sprite { max-width:100%; max-height:19dvh; width:auto; height:auto; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; filter:drop-shadow(0 4px 2px rgba(15,23,42,.12)); }
+.pokemon-sprite-stage { min-height:clamp(105px,22dvh,180px) !important; display:flex; align-items:flex-end; justify-content:center; }
+.hp-bar-container { height:14px !important; border:1px solid #334155 !important; border-radius:999px !important; overflow:hidden; background:#dbe4ef !important; }
+.hp-bar { border-radius:999px; transition:width .65s ease !important; }
+#menu { border:1px solid #bfd4ec !important; border-radius:14px !important; background:rgba(255,255,255,.97) !important; box-shadow:0 4px 0 rgba(30,64,175,.1) !important; }
+#message-log { border:1px solid #cbd5e1 !important; border-radius:10px !important; background:#eff6ff !important; color:#172033 !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:700; line-height:1.5; }
+#battle-menu button,#moves-container button,#setting-button,#surrender-button,#fight-button { border-radius:10px !important; border-width:1px !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:800; min-height:42px; }
+#screen-overlay { z-index:30 !important; }
+#weather-indicator,#field-indicator,#turn-counter,#rating-display { border-radius:9px !important; font-family:system-ui,'Noto Sans JP',sans-serif !important; font-weight:700; backdrop-filter:blur(5px); }
+@media(max-width:640px) {
+ #battle-screen { aspect-ratio:auto !important; min-height:clamp(500px,72dvh,690px) !important; }
+ #opponent-area { top:44px !important; right:5% !important; width:44% !important; }
+ #player-area { left:5% !important; width:44% !important; bottom:clamp(170px,29dvh,230px) !important; }
+ .pokemon-sprite-stage { min-height:clamp(90px,16dvh,135px) !important; }
+ #opponent-sprite,#player-sprite { max-height:16dvh !important; }
+ #menu { min-height:155px !important; max-height:235px !important; grid-template-columns:1fr !important; gap:6px !important; }
+ #message-log { min-height:58px; }
+ #battle-menu,#moves-container { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+ #battle-status-stack { max-width:45% !important; }
+}
+</style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div id="selection-tooltip" class="absolute hidden nes-container bg-white/95 p-2 text-xs z-50 w-auto pointer-events-none"></div>
@@ -2411,17 +2446,37 @@ btn.onmouseout = () => {
 }
 
     
-    function getSpriteUrl(pokemon, back = false) {
-        if (typeof pokemon.id === 'string') {
-             const baseUrl = "https://play.pokemonshowdown.com/sprites/";
-             const folder = back ? "ani-back" : "ani";
-             const shiny = pokemon.isShiny ? "-shiny" : "";
-             return `${baseUrl}${folder}${shiny}/${pokemon.id}.gif`;
-        } else {
-             const shinyFolder = pokemon.isShiny ? 'shiny/' : '';
-             const backFolder = back ? 'back/' : '';
-             return `${POKE_API_BASE_URL}${backFolder}${shinyFolder}${pokemon.id}.gif`;
+    function getPixelSpriteUrl(id, back = false, shiny = false) {
+        const value = String(id || '').trim().toLowerCase();
+        if (!value) return '';
+        // numeric PokeAPI IDs use the 5th-gen Black/White pixel sprites.
+        if (/^\\d+$/.test(value)) {
+            const root = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/';
+            const folder = back ? (shiny ? 'back/shiny/' : 'back/') : (shiny ? 'shiny/' : '');
+            return root + folder + value + '.png';
         }
+        const folder = back ? (shiny ? 'gen5-back-shiny' : 'gen5-back') : (shiny ? 'gen5-shiny' : 'gen5');
+        return `https://play.pokemonshowdown.com/sprites/${folder}/${encodeURIComponent(value)}.png`;
+    }
+
+    function getSpriteUrl(pokemon, back = false) {
+        if (!pokemon) return '';
+        let specialUrl = null;
+        if (pokemon.megaEvolved && (pokemon.megaSpriteFront || pokemon.megaSpriteBack)) {
+            specialUrl = back ? pokemon.megaSpriteBack : pokemon.megaSpriteFront;
+        } else if (pokemon.disguiseBroken && (pokemon.bustedSpriteFront || pokemon.bustedSpriteBack)) {
+            specialUrl = back ? pokemon.bustedSpriteBack : pokemon.bustedSpriteFront;
+        }
+        if (specialUrl) {
+            // Preserve the dedicated Mega/form image but render it in the same pixel-sprite style.
+            const match = String(specialUrl).match(/\\/([^/?#]+)\\.(?:gif|png|webp)(?:[?#].*)?$/i);
+            if (match) {
+                let slug = match[1].replace(/-shiny$/, '').toLowerCase();
+                slug = slug.replace(/-mega-x$/, '-megax').replace(/-mega-y$/, '-megay');
+                return getPixelSpriteUrl(slug, back, !!pokemon.isShiny);
+            }
+        }
+        return getPixelSpriteUrl(pokemon.id, back, !!pokemon.isShiny);
     }
 
     function getMoveTooltipContent(move) {
