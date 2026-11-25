@@ -2033,7 +2033,8 @@ document.getElementById("reset-no-button");
         updateOpeningStats();
     }
 
-    // 起動ボタンは冒頭で登録済み。
+    // 起動ボタン・履歴ボタンを初期化
+    startBattleButton.onclick = startBattleFromOpening;
     historyButton.onclick = showHistoryScreen;
     historyBackButton.onclick = showOpeningScreen;
 
