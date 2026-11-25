@@ -6110,6 +6110,7 @@ if (
 
         return { hit: false };
     }
+}
     if (defender.isProtected && move?.isDynamaxMove && !defender.isMaxGuard) {
         damage = Math.max(1, Math.floor(damage / 4));
         await showMessage('まもるで ダイマックスわざの ダメージを へらした！');
