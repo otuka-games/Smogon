@@ -7198,11 +7198,11 @@ btn.onmouseout = () => {
     document.head.appendChild(capIdleMotionStyle);
 
 function setPokemonSprite(img, pokemon, back = false) {
+        if (!img || !pokemon) return;
+        const id = String(pokemon.id || '').toLowerCase();
         img.classList.remove('sprite-cawmodore-idle', 'sprite-voodoom-idle');
         if (id === 'cawmodore') img.classList.add('sprite-cawmodore-idle');
         else if (id === 'voodoom') img.classList.add('sprite-voodoom-idle');
-        if (!img || !pokemon) return;
-        const id = String(pokemon.id || '').toLowerCase();
         const token = String((Number(img.dataset.spriteRequestToken) || 0) + 1);
         img.dataset.spriteRequestToken = token;
         // まず従来の第5世代風PNGを表示し、GIF取得後に同じ絵柄のアニメーションへ切り替える。
