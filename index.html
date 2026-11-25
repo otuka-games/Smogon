@@ -420,7 +420,7 @@ surrenderButton.onclick = () => {
         'しゅんそくスカーフ': { name: 'しゅんそくスカーフ', description: '持つと素早さが1.5倍。'},
         'ゴツゴツメット': { name: 'ゴツゴツメット', description: '直接触れたら1/6のダメージ'},
         'たいきゅうチョッキ': { name: 'たいきゅうチョッキ', description: '特防が1.5倍。'},
-        'オボンの実': { name: 'オボンの実', description: 'HPが半分でHPが1/2回復。'},
+        'オボンの実': { name: 'オボンの実', description: 'HPが半分でHPが1/4回復。'},
         'きのみバスケット': { name: 'きのみバスケット', description: '毎ターンHPを回復かも'},
         'たべのこし': { name: 'たべのこし', description: '毎ターンHPを1/16回復。'},
         'せんせいのツメ': { name: 'せんせいのツメ', description: '30%で先制できる'},
@@ -5822,6 +5822,17 @@ if (
     defender.lastDamageTaken = damage;
     defender.lastDamageCategory = move.category;
 
+    // はたきおとす：本体にダメージが通った場合のみ、落とせる持ち物を除去する。
+    if (
+        move.name === "はたきおとす" &&
+        defender.item?.name &&
+        !["メガストーン", "Zクリスタル"].includes(defender.item.name)
+    ) {
+        const knockedItem = defender.item.name;
+        defender.item = null;
+        await showMessage(`${knockedItem} を はたきおとした！`);
+    }
+
     updateHpBars();
 
     // ⭐ ここでまず defender の瀕死チェック
@@ -6521,24 +6532,14 @@ for (const pokemon of [playerPokemon, opponentPokemon]) {
 }
 if(weather.type === 'snow') {
             await showMessage('ゆきが ふっている！');
-            if(!playerPokemon.types.includes('こおり') && playerPokemon.currentHp > 0) {
-                 playerPokemon.currentHp -= Math.floor(playerPokemon.maxHp / 16);
-                 await showMessage(`${playerPokemon.name}は さむさで ダメージを うけた！`);
-                 updateHpBars();
-                 if (await checkFainted(playerPokemon, true)) return true;
-            }
-             if(!opponentPokemon.types.includes('こおり') && opponentPokemon.currentHp > 0) {
-                 opponentPokemon.currentHp -= Math.floor(opponentPokemon.maxHp / 16);
-                 await showMessage(`あいての ${opponentPokemon.name}は さむさで ダメージを うけた！`);
-                 updateHpBars();
-                 if (await checkFainted(opponentPokemon, false)) return true;
-            }
+            // ゆきはHPダメージを与えず、こおりタイプの物理防御を強化する。
             weather.turns--;
-    if (weather.turns === 0) {
-        weather.type = 'none';
-        await showMessage('ゆきは やんだ！');
-        updateWeatherIndicator();
-    }
+            if (weather.turns <= 0) {
+                weather.type = 'none';
+                weather.turns = 0;
+                await showMessage('ゆきは やんだ！');
+                updateWeatherIndicator();
+            }
 }
         async function applyLeechSeed(target, isPlayer) {
     if (!target.seeded || target.currentHp <= 0) return false;
@@ -6869,7 +6870,7 @@ async function applyGeigekiScopeOnEnter(pokemon) {
     async function checkAndUseItem(pokemon) {
         if (pokemon.item && pokemon.item.name === "オボンの実" && !pokemon.item.used && pokemon.currentHp > 0 && pokemon.currentHp <= pokemon.maxHp / 2) {
             pokemon.item.used = true;
-            const healAmount = Math.floor(pokemon.maxHp / 2);
+            const healAmount = Math.floor(pokemon.maxHp / 4);
             pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + healAmount);
             await showMessage(`${pokemon.name} は オボンの実で かいふくした！`);
             updateHpBars();
@@ -6981,6 +6982,11 @@ defenseStat =
     defender.defense *
     getStatModifier(defStageFix(defenseStage));
 
+// ゆき：こおりタイプの物理防御1.5倍
+if (weather.type === "snow" && defender.types.includes("こおり")) {
+    defenseStat *= 1.5;
+}
+
 // わざわいのつるぎ
 if (attacker.ability === "わざわいのつるぎ") {
     defenseStat *= 0.75;
@@ -7020,6 +7026,10 @@ if (defender.ability === "わざわいのうつわ") {
 }
 
         let movePower = move.power;
+        // はたきおとす：落とせる持ち物を持つ相手には威力1.5倍。
+        if (move.name === "はたきおとす" && defender.item?.name && !["メガストーン", "Zクリスタル"].includes(defender.item.name)) {
+            movePower *= 1.5;
+        }
         if ( move.name === "からげんき" && ( attacker.status === "burn" ||attacker.status === "poison" ||attacker.status === "toxic" ||attacker.status === "paralysis" )) { movePower *= 2; }
         if ( move.name === "ふっとう" && ( attacker.status === "burn" )) { movePower *= 2; }
         if (move.name === "てんびんのさいだん") {
