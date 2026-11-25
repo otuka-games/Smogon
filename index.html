@@ -4601,7 +4601,7 @@ function getOpponentMove() {
 
     async function handleAttack(attacker, defender, move, isFirstAttacker) {
         const isPlayerAttacking = attacker === playerPokemon;
-        if (field.type === 'psyco' && (move.priority || 0) > 0 && isPokemonGrounded(defender)) {
+        if (field.type === 'psyco' && move.category !== 'status' && (move.priority || 0) > 0 && isPokemonGrounded(defender)) {
             await showMessage('サイコフィールドに まもられて 先制技が きかなかった！');
             return false;
         }
@@ -6292,7 +6292,7 @@ if (
             await showMessage(`しかし うまくきまらなかった！`); return;
         }
         const sleepMoves = ['さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび'];
-        const statusMoves = ['おにび', 'でんじは', 'どくどく', 'へびにらみ', 'さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび', 'あやしいひかり', 'いばる'];
+        const statusMoves = ['おにび', 'でんじは', 'どくどく', 'へびにらみ', 'さいみんじゅつ', 'Zさいみんじゅつ', 'ねむりごな', 'きのこのほうし', 'あくび'];
         if (isPokemonGrounded(defender) && ((field.type === 'electric' && sleepMoves.includes(move.name)) || (field.type === 'misty' && statusMoves.includes(move.name))) && !['ねむる'].includes(move.name)) {
             await showMessage('フィールドの こうかで 状態変化を うけない！');
             return;
@@ -6471,6 +6471,7 @@ if (
 }
 
         updateStatusMarkers();
+        updateFieldIndicator();
         updateStatDisplay(playerPokemon, document.getElementById('player-stat-display'));
 updateStatDisplay(opponentPokemon, document.getElementById('opponent-stat-display'));
         if (message) {
@@ -6868,6 +6869,7 @@ async function applyBerryBasketEffect(pokemon, isPlayer) {
     function isPokemonGrounded(pokemon) {
     if (!pokemon) return false;
     const types = Array.isArray(pokemon.types) ? pokemon.types : [pokemon.types].filter(Boolean);
+    if (pokemon.grounded === false || pokemon.isGrounded === false) return false;
     return !types.includes('ひこう') && pokemon.ability !== 'ふゆう';
 }
 
@@ -7136,9 +7138,13 @@ if (
 }
 
 if (weather.type === 'rain') {
-    if (move.type === 'みず') movePower *= 1.5;
-    if (move.type === 'ほのお') movePower *= 0.5;
+    if (attackTypes.includes('みず')) movePower *= 1.5;
+    if (attackTypes.includes('ほのお')) movePower *= 0.5;
 };
+if (weather.type === 'sun') {
+    if (attackTypes.includes('ほのお')) movePower *= 1.5;
+    if (attackTypes.includes('みず')) movePower *= 0.5;
+}
 if (field.type === 'psyco' && isPokemonGrounded(attacker) && attackTypes.includes('エスパー')) {
     movePower *= 1.3;
 }
