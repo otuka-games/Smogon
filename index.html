@@ -2951,7 +2951,7 @@ opponentPokemon.hasMoved = false;
              playerMove.currentPp--;
         }
 
-        const opponentMove = getOpponentMove();
+        let opponentMove = getOpponentMove();
         playerPokemon.selectedMove = playerMove;
         opponentPokemon.selectedMove = opponentMove;
         if (hasChoiceItem(playerPokemon) && !playerPokemon.choiceLockedMove) playerPokemon.choiceLockedMove = playerMove?.name;
